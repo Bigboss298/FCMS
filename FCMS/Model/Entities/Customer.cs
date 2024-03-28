@@ -6,6 +6,6 @@
         public string UserId { get; set; } = default!;
         public User User { get; set; } = default!;
         public ICollection<Payment> Payments { get; set; } = new HashSet<Payment>();
-        public ICollection<Product> Products { get; set;} = new HashSet<Product>();
+        public ICollection<Order> Orders { get; set; } = new HashSet<Order>();
     }
 }

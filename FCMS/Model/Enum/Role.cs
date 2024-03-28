@@ -2,7 +2,8 @@
 {
     public enum Role
     {
-        Farmer = 1,
-        Customer 
+        Admin = 1,
+        Farmer,
+        Customer, 
     }
 }
