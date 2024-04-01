@@ -7,7 +7,8 @@
         public int Quantity { get; set; }
         public decimal Price { get; set; }
         public ICollection<ProductOrder> ProductOrder { get; set; } = new HashSet<ProductOrder>();
-        
+        public string? CustomerId { get; set; }
+        public Customer? Customer { get; set; }
 
     }
 }

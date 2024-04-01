@@ -1,6 +1,7 @@
 ﻿using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FCMS.Controllers
@@ -15,15 +16,16 @@ namespace FCMS.Controllers
         {
             _farmerService = farmerService;
         }
+
         [HttpPost("Create")]
-        public async Task<IActionResult> Create(CreateFarmerRequestModel model)
+        public async Task<IActionResult> Create([FromForm] CreateFarmerRequestModel model)
         {
             if(ModelState.IsValid)
             {
                 try
                 {
                     var newFarmer = await _farmerService.CreateAsync(model);
-                    return CreatedAtAction("Get", model.Farmer.UserId);
+                    return Ok(newFarmer);
 
                 }
                 catch (Exception ex)
@@ -34,6 +36,8 @@ namespace FCMS.Controllers
             }
             return BadRequest("Invalid details");
         }
+
+        [Authorize]
         [HttpGet("Farmer")]
         public async Task<IActionResult> Get(string id)
         {
@@ -51,6 +55,8 @@ namespace FCMS.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [Authorize]
         [HttpGet("Farmers")]
         public async Task<IActionResult> GetFarmers()
         {

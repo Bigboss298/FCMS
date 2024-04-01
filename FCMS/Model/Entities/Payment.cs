@@ -6,7 +6,7 @@ namespace FCMS.Model.Entities
     {
        
         public string ReferenceNumber { get; set; } = default!;
-        public string AuthorizationUri { get; set; } = default!;
+        public string? AuthorizationUri { get; set; }
         public decimal Amount { get; set; }
         public PaymentMethod Method { get; set; } 
         public string TransactionId { get; set; } = default!;

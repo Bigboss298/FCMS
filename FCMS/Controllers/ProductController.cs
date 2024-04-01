@@ -2,6 +2,7 @@
 using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FCMS.Controllers
@@ -16,12 +17,15 @@ namespace FCMS.Controllers
         {
             _productService = productService;
         }
-        [HttpGet("Index")]
-        public async Task<IActionResult> Index()
+        [Authorize]
+        [HttpGet("Products")]
+        public async Task<IActionResult> Products()
         {
             var products = await _productService.GetProductsAsync();
             return Ok(products);
         }
+
+        [Authorize]
         [HttpGet("GetByAny")]
         public IActionResult GetByAnyAsync(string param)
         {
@@ -39,8 +43,10 @@ namespace FCMS.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [Authorize]
         [HttpGet("GetById")]
-        public async Task<IActionResult> GetById(string id)
+        public async Task<IActionResult> GetByIdAsync(string id)
         {
             try
             {
@@ -57,6 +63,8 @@ namespace FCMS.Controllers
             }
 
         }
+
+        [Authorize]
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteAsync(string id)
         {
@@ -67,8 +75,10 @@ namespace FCMS.Controllers
             }
             return BadRequest("id not valid!!!");
         }
+
+        [Authorize]
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateAsync(UpdateProductRequestModel model, string id)
+        public async Task<IActionResult> UpdateAsync([FromForm]UpdateProductRequestModel model, string id)
         {
             try
             {
@@ -82,6 +92,25 @@ namespace FCMS.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateAsync([FromForm] CreateProductRequestModel model)
+        {
+            try
+            {
+                var newProduct = await _productService.CreateAsync(model);
+                return Ok(newProduct);
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

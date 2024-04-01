@@ -29,7 +29,7 @@ namespace FCMS.Model.DTOs
         public string Description { get; set; } = default!;
         public int Quantity { get; set; }
         public decimal Price { get; set; }
-        public ICollection<IFormFile> Images { get; set; } = default!;
+        public ICollection<IFormFile> Images { get; set; } = new HashSet<IFormFile>();
         public string FarmerId { get; set; } = default!;
     }
 }

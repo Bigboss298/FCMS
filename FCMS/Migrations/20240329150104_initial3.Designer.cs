@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240323171806_Initial")]
-    partial class Initial
+    [Migration("20240329150104_initial3")]
+    partial class initial3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,7 +47,14 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Addresses");
                 });
@@ -79,7 +86,12 @@ namespace FCMS.Migrations
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Chats");
                 });
@@ -236,17 +248,17 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("DateCreated")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CustomerId");
 
                     b.ToTable("PaymentDetails");
                 });
@@ -379,7 +391,7 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "3/23/2024",
+                            DateCreated = "3/29/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,
@@ -388,6 +400,22 @@ namespace FCMS.Migrations
                             PhoneNumber = "08155850462",
                             Role = 1
                         });
+                });
+
+            modelBuilder.Entity("FCMS.Model.Entities.Address", b =>
+                {
+                    b.HasOne("FCMS.Model.Entities.User", null)
+                        .WithOne("Address")
+                        .HasForeignKey("FCMS.Model.Entities.Address", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FCMS.Model.Entities.Chat", b =>
+                {
+                    b.HasOne("FCMS.Model.Entities.User", null)
+                        .WithMany("Chats")
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Customer", b =>
@@ -403,16 +431,18 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.Farmer", b =>
                 {
-                    b.HasOne("FCMS.Model.Entities.User", null)
+                    b.HasOne("FCMS.Model.Entities.User", "User")
                         .WithOne("Farmer")
                         .HasForeignKey("FCMS.Model.Entities.Farmer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Order", b =>
                 {
-                    b.HasOne("FCMS.Model.Entities.Customer", null)
+                    b.HasOne("FCMS.Model.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId");
 
@@ -421,6 +451,8 @@ namespace FCMS.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Product");
                 });
@@ -446,13 +478,13 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.PaymentDetails", b =>
                 {
-                    b.HasOne("FCMS.Model.Entities.User", "User")
+                    b.HasOne("FCMS.Model.Entities.Customer", "Customer")
                         .WithMany("PaymentDetails")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Product", b =>
@@ -498,6 +530,8 @@ namespace FCMS.Migrations
                 {
                     b.Navigation("Orders");
 
+                    b.Navigation("PaymentDetails");
+
                     b.Navigation("Payments");
                 });
 
@@ -520,11 +554,13 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.User", b =>
                 {
+                    b.Navigation("Address");
+
+                    b.Navigation("Chats");
+
                     b.Navigation("Customer");
 
                     b.Navigation("Farmer");
-
-                    b.Navigation("PaymentDetails");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,8 @@
 ﻿using FCMS.Interfaces.Repository;
+using FCMS.Model.Entities;
 using FCMS.Persistence;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace FCMS.Implementations.Repository
 {
@@ -7,6 +10,24 @@ namespace FCMS.Implementations.Repository
     {
         public ProductRepository(ApplicationDbContext context) : base(context)
         {
+        }
+
+        public async Task<Product> Get(Expression<Func<Product, bool>> expression)
+        {
+            return await _context.Products
+                .Include(f => f.Farmer)
+                .ThenInclude(u => u.User)
+                .ThenInclude(a => a.Address)
+                .FirstOrDefaultAsync(expression);
+        }
+
+        public async Task<IReadOnlyList<Product>> GetAll()
+        {
+            return (IReadOnlyList<Product>)await _context.Products
+                .Include(f => f.Farmer)
+                .ThenInclude(u => u.User)
+                .ThenInclude(a => a.Address)
+                .ToListAsync();
         }
     }
 }
