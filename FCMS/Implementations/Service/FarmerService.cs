@@ -5,6 +5,9 @@ using FCMS.Model.DTOs;
 using FCMS.Model.Entities;
 using FCMS.Model.Exceptions;
 using Mapster;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 
 namespace FCMS.Implementations.Service
 {
@@ -14,46 +17,80 @@ namespace FCMS.Implementations.Service
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileManager _fileManager;
+        private readonly IAddressRepository _addressRepository;
+        private static HttpClient _client;
+        private readonly string _secretKey;
+        private readonly IPaymentDetails _paymentDetails;
 
 
-        public FarmerService(IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager)
+        public FarmerService(IConfiguration configuration, IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IAddressRepository addressRepository, IPaymentDetails paymentDetails)
         {
             _farmerRepository = farmerRepository;
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
             _fileManager = fileManager;
+            _addressRepository = addressRepository;
+            _secretKey = configuration["Paystack:ApiKey"];
+            _client = new HttpClient();
+            _paymentDetails = paymentDetails;
         }
 
         public async Task<BaseResponse<FarmerDto>> CreateAsync(CreateFarmerRequestModel model)
         {
-            var farmer = await _userRepository.Get<User>(x => x.Email == model.Email);
-            if(farmer != null)
+            if (model is null) throw new BadRequestException($"Model can't be null");
+            var checkFarmer = await _userRepository.Get<User>(x => x.Email == model.Email);
+            if(checkFarmer != null)
             {
                 throw new Exception($"User with the Email {model.Email} already exists");
             }
 
-            var newFarmer = model.Adapt<Farmer>();
+
             var newUser = model.Adapt<User>();
+            var newAddress = model.Adapt<Address>();
+            var newFarmer = new Farmer
+            {
+                UserEmail = newUser.Email,
+                UserId = newUser.Id,
+                User = newUser,
+            };
+            var paymentDetails = new PaymentDetails
+            {
+                BankCode = model.BankCode,
+                Type = "Nuban",
+                AccountName = model.AccountName,
+                AccountNumber = model.AccountNumber,
+                FarmerId = newFarmer.Id,
+            };
+
             var farmerImage = await _fileManager.UploadFileToSystem(model.ProfilePicture);
             if(!farmerImage.Status)
             {
                 throw new Exception($"{farmerImage.Message}");
             };
 
+
+            var newPaymentDetails = await CreateTransferRecipientAsync(model.AccountName, model.AccountNumber, model.BankCode);
+
+            paymentDetails.Recipient_Code = newPaymentDetails.Recipient_Code;
             newUser.ProfilePicture = farmerImage.Data.Name;
+            newUser.Farmer = newFarmer;
             newFarmer.User = newUser;
             newFarmer.UserId = newUser.Id;
-            newFarmer.UserEmail = newUser.Email;
+            newUser.Address = newAddress;
+            newAddress.UserId = newUser.Id;
+
 
             _farmerRepository.Insert<Farmer>(newFarmer);
             _userRepository.Insert<User>(newUser);
+            _addressRepository.Insert<Address>(newAddress);
+            _paymentDetails.Insert<PaymentDetails>(newPaymentDetails);
+
             await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<FarmerDto>
             {
                 Message = "Farmer registered Successfully",
-                Status = true,
-                Data = newFarmer.Adapt<FarmerDto>(),
+                Status = true
             };
         }
 
@@ -73,10 +110,10 @@ namespace FCMS.Implementations.Service
 
         public async Task<BaseResponse<FarmerDto>> GetAsync(string id)
         {
-            var farmer = await _farmerRepository.Get<Farmer>(x => x.Id == id);
+            var farmer = await _farmerRepository.Get(x => x.Id == id);
             if(farmer  is null)
             {
-                throw new NotFoundException($"Farmer with the Id {id} not found");
+                throw new NotFoundException("Farmer not Found!!!");
             }
             return new BaseResponse<FarmerDto>
             {
@@ -84,35 +121,48 @@ namespace FCMS.Implementations.Service
                 Status = true,
                 Data = new FarmerDto
                 {
+                    FarmerId = farmer.Id,
                     UserEmail = farmer.UserEmail,
-                    UserId = farmer.UserId,
-                    User = new User()
+                    UserId = farmer.User.Id,
+                    User = new User
                     {
+                        Id = farmer.Id,
                         FirstName = farmer.User.FirstName,
                         LastName = farmer.User.LastName,
                         Email = farmer.User.Email,
+                        Password = farmer.User.Password,
                         PhoneNumber = farmer.User.PhoneNumber,
                         ProfilePicture = farmer.User.ProfilePicture,
                         Gender = farmer.User.Gender,
                         Role = farmer.User.Role,
+                        Address = new Address()
+                        {
+                            Country = farmer.User.Address.Country,
+                            City = farmer.User.Address.City,
+                            State = farmer.User.Address.State,
+                            Language = farmer.User.Address.Language,
+                            UserId = farmer.User.Id
+                        }
                     },
-                }
+                },
             };
         }
 
         public async Task<IReadOnlyList<FarmerDto>> GetFarmersAsync()
         {
-            var farmers = await _farmerRepository.GetAll<Farmer>();
+            var farmers = await _farmerRepository.GetAll();
             if(!farmers.Any())
             {
                 return new List<FarmerDto>();
             }
-            return (IReadOnlyList<FarmerDto>)farmers.Select(x => new FarmerDto
+            return farmers.Select(x => new FarmerDto
             {
+                FarmerId = x.Id,
                 UserEmail = x.UserEmail,
                 UserId = x.UserId,
                 User = new User()
                 {
+                    Id = x.User.Id,
                     FirstName = x.User.FirstName,
                     LastName = x.User.LastName,
                     Email = x.User.Email,
@@ -120,6 +170,14 @@ namespace FCMS.Implementations.Service
                     ProfilePicture = x.User.ProfilePicture,
                     Gender = x.User.Gender,
                     Role = x.User.Role,
+                    Address = new Address()
+                    {
+                        Country = x.User.Address.Country,
+                        City = x.User.Address.City,
+                        State = x.User.Address.State,
+                        Language = x.User.Address.Language,
+                        UserId = x.User.Id
+                    }
                 },
             }).ToList();
         }
@@ -144,6 +202,38 @@ namespace FCMS.Implementations.Service
                 Status = true,
             };
 
+        }
+
+
+        private async Task<PaymentDetails> CreateTransferRecipientAsync(string name, string accountNumber, string bankCode)
+        {
+            string url = "https://api.paystack.co/transferrecipient";
+            string contentType = "application/json";
+            string data = JsonSerializer.Serialize(new
+            {
+                type = "nuban",
+                name,
+                account_number = accountNumber,
+                bank_code = bankCode,
+                currency = "NGN",
+            });
+
+            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _secretKey);
+            _client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(contentType));
+
+            var content = new StringContent(data, Encoding.UTF8, contentType);
+
+            HttpResponseMessage response = await _client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<PaymentDetails>(responseBody);
+            }
+            else
+            {
+                throw new Exception($"Error: {response.StatusCode}");
+            }
         }
     }
 }

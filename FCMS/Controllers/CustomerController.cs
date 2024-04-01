@@ -1,6 +1,7 @@
 ﻿using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FCMS.Controllers
@@ -15,6 +16,7 @@ namespace FCMS.Controllers
         {
             _customerService = customerService;
         }
+        [Authorize]
         [HttpGet("Customers")]
         public async Task<IActionResult> GetCustomers()
         {
@@ -28,6 +30,8 @@ namespace FCMS.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [Authorize]
         [HttpGet("Customer")]
         public async Task<IActionResult> Get(string id)
         {
@@ -48,13 +52,14 @@ namespace FCMS.Controllers
         }
         [HttpPost("Register")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateCustomerRequestModel model)
-        {
+            {
             if (ModelState.IsValid)
             {
                 try
                 {
                     var newCustomer = await _customerService.CreateAsync(model);
-                    return CreatedAtAction("Get", newCustomer.Data.UserId);
+                    //return CreatedAtAction("Get", newCustomer.Data.UserId);
+                    return Ok(newCustomer);
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,7 @@
 ﻿using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FCMS.Controllers
@@ -10,10 +11,13 @@ namespace FCMS.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        //private readonly ILogger<UserController> _logger;
+        private readonly IConfiguration _config;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IConfiguration config)
         {
             _userService = userService;
+            _config = config;
         }
         [HttpPost("SignIn")]
         public async Task<IActionResult> Login([FromForm] UserLoginRequestModel model)
@@ -32,6 +36,8 @@ namespace FCMS.Controllers
             }
             return BadRequest("Invalid Login Parameters");
         }
+
+        [Authorize]
         [HttpPost("Delete")]
         public async Task<IActionResult> Delete([FromRoute] string id)
         {
@@ -49,6 +55,8 @@ namespace FCMS.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [Authorize]
         [HttpPost("Update")]
         public async Task<IActionResult> UpdateUser(UpdateUserRequestModel model)
         {
@@ -66,6 +74,8 @@ namespace FCMS.Controllers
             }
             return BadRequest("Invalid parameters");
         }
+
+        [Authorize]
         [HttpGet("GetUsers")]
         public async Task<IActionResult> GetUsers()
         {

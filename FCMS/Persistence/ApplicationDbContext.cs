@@ -14,12 +14,14 @@ namespace FCMS.Persistence
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Farmer> Farmers { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ProductImages> ProductImages { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Chat> Chats { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<PaymentDetails> PaymentDetails { get; set; }
         public DbSet<ProductOrder> ProductOrders { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,13 +38,12 @@ namespace FCMS.Persistence
                         Role = (Role)1,
                     }
                 );
-            modelBuilder.Entity<Admin>().HasData(
-                    new Admin
-                    {
-                        UserId = "ee4c458",
-                        UserName = "John Doe",
-                    }
-                );
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Customer)
+                .WithMany(c => c.Payments)
+                .HasForeignKey(p => p.CustomerId);
+
+
         }
     }
 

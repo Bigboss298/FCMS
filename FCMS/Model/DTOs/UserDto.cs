@@ -14,8 +14,8 @@ namespace FCMS.Model.DTOs
         public Gender Gender { get; set; } = default!;
         public Role Role { get; set; } = default!;
         public Farmer Farmer { get; set; } = default!;
-        public Customer Customer { get; set; } = default!;
-        public ICollection<PaymentDetails> PaymentDetails { get; set; } = new HashSet<PaymentDetails>();
+        public Address? Address { get; set; }
+        public ICollection<Chat> Chats { get; set; } = new HashSet<Chat>();
         public string? JwtToken { get; set; }
     }
 

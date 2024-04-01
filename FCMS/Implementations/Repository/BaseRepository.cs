@@ -2,6 +2,7 @@
 using FCMS.Model.Entities;
 using FCMS.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace FCMS.Implementations.Repository
@@ -25,7 +26,10 @@ namespace FCMS.Implementations.Repository
 
         public async Task<IReadOnlyList<T>> GetAll<T>() where T : BaseEntity
         {
-            return await _context.Set<T>().ToListAsync();
+            return await _context.Set<T>()
+                //.Include(c => c.Equals(typeof(T)))
+                //.ThenInclude(a => a.Equals(typeof(T)))
+                .ToListAsync();
         }
 
         public Task<IReadOnlyList<T>> GetAll<T>(string param) where T : BaseEntity

@@ -4,6 +4,6 @@ namespace FCMS.Auth
 {
     public interface IJWTManager
     {
-        string CreateToken(JwtTokenRequestModel model);
+        string CreateToken(string key, string issuer, JwtTokenRequestModel model);
     }
 }

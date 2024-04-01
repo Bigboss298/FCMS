@@ -6,6 +6,6 @@
         public string City { get; set; } = default!;
         public string State { get; set; } = default!;
         public string Language { get; set; } = default!;
-        public User User { get; set; } = default!;
+        public string UserId { get; set; } = default!;
     }
 }

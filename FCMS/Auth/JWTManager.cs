@@ -1,4 +1,5 @@
 ﻿using FCMS.Model.DTOs;
+using FCMS.Model.Entities;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,45 +10,69 @@ namespace FCMS.Auth
 {
     public class JWTManager : IJWTManager
     {
-        private const int ExpirationMinutes = 30;
-        public string CreateToken(JwtTokenRequestModel model)
+        public string CreateToken(string key, string issuer, JwtTokenRequestModel model)
         {
-            var expiration = DateTime.UtcNow.AddMinutes(ExpirationMinutes);
-            var tokenHandler = new JwtSecurityTokenHandler();
-            return tokenHandler.WriteToken(CreateJwtToken(CreateClaims(model), CreateSigningCredentials(), expiration));
+            _ = new JwtSecurityTokenHandler();
+
+            var claims = new List<Claim>
+            {
+                 new Claim(ClaimTypes.NameIdentifier, model.Id),
+                 new Claim(ClaimTypes.Name, model.FirstName),
+                 new Claim(ClaimTypes.Role, model.Role.ToLower()),
+                 new Claim(ClaimTypes.Email, model.Email),
+                 new Claim(ClaimTypes.UserData, model.ProfilePicture),
+            };
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
+            var tokenDescriptor = new JwtSecurityToken(issuer, issuer, claims,
+             expires: DateTime.Now.AddHours(5), signingCredentials: credentials);
+            return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+
         }
 
-        private JwtSecurityToken CreateJwtToken(List<Claim> claims, SigningCredentials credentials, DateTime expiration) => new("FCMSAuthIssuer", "FCMSAuthAudience", claims, expires: expiration, signingCredentials: credentials);
-
-        private List<Claim> CreateClaims(JwtTokenRequestModel model)
+        public static bool IsTokenValid(string key, string issuer, string token)
         {
+            var mySecret = Encoding.UTF8.GetBytes(key);
+            var mySecurityKey = new SymmetricSecurityKey(mySecret);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+
             try
             {
-                var claims = new List<Claim>
-                 {
-                     new Claim(JwtRegisteredClaimNames.Sub, "TokenForTheApiWithAuth"),
-                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                     new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString(CultureInfo.InvariantCulture)),
-                     new Claim(ClaimTypes.NameIdentifier, model.Id),
-                     new Claim(ClaimTypes.Name, model.FirstName),
-                     new Claim(ClaimTypes.Role, model.Role.ToLower()),
-                     new Claim(ClaimTypes.Email, model.Email),
-                     new Claim(ClaimTypes.UserData, model.ProfilePicture),
-                 };
-                return claims;
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = issuer,
+                    ValidAudience = issuer,
+                    IssuerSigningKey = mySecurityKey,
+                }, out SecurityToken validatedToken);
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
-                throw;
+                return false;
             }
-        }
-        private SigningCredentials CreateSigningCredentials()
-        {
-            var signingCredentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes("!Iwantthistobeextremelysecretivesopleasetreatwithcare!")), SecurityAlgorithms.HmacSha256);
-            return signingCredentials;
+            return true;
         }
 
+        public static Guid GetLoginId(string? token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtToken = tokenHandler.ReadJwtToken(token);
+
+            var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (idClaim != null)
+            {
+                string userId = idClaim.Value;
+                return Guid.Parse(userId);
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
     }
 }

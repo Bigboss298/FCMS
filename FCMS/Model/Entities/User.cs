@@ -1,4 +1,5 @@
 ﻿using FCMS.Model.Enum;
+using System.Text.Json.Serialization;
 
 namespace FCMS.Model.Entities
 {
@@ -14,6 +15,8 @@ namespace FCMS.Model.Entities
         public Role Role { get; set; } = default!;
         public Farmer? Farmer { get; set; }
         public Customer? Customer { get; set; }
-        public ICollection<PaymentDetails> PaymentDetails { get; set; } = new HashSet<PaymentDetails>();
+        public Address? Address { get; set; }
+        public ICollection<Chat> Chats { get; set; } = new HashSet<Chat>();
+        public string? Token { get; set; }
     }
 }

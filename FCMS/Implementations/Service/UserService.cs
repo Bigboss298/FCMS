@@ -14,13 +14,15 @@ namespace FCMS.Implementations.Service
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJWTManager _tokenService;
+        private readonly IConfiguration _config;
+        private string generateToken = null;
 
-        public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork, IJWTManager tokenService)
+        public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork, IJWTManager tokenService, IConfiguration config)
         {
             _unitOfWork = unitOfWork;
             _userRepository = userRepository;
             _tokenService = tokenService;
-
+            _config = config;
         }
         public async Task<bool> DeleteAsync(string id)
         {
@@ -77,9 +79,13 @@ namespace FCMS.Implementations.Service
             var loggedInUser = await _userRepository.Get<User>(x => x.Email == model.Email);
             var jwtModel1 = loggedInUser.Adapt<UserDto>();
             var jwtModel = jwtModel1.Adapt<JwtTokenRequestModel>();
+            jwtModel.Id = loggedInUser.Id;
             jwtModel.ProfilePicture = jwtModel1.ProfilePicture;
-            var token = _tokenService.CreateToken(jwtModel);
+            var token = generateToken = _tokenService.CreateToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), jwtModel);
             jwtModel1.JwtToken = token;
+
+            user.Token = jwtModel1.JwtToken;
+            _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<UserDto>()
             {
