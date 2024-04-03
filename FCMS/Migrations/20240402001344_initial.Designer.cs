@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240329150104_initial3")]
-    partial class initial3
+    [Migration("20240402001344_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -130,6 +130,9 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("PaymentDetailId")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("UserEmail")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -186,7 +189,6 @@ namespace FCMS.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("AuthorizationUri")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("CustomerId")
@@ -232,15 +234,7 @@ namespace FCMS.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("AccountName")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<string>("AccountNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("AccountType")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -248,17 +242,36 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Currency")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CustomerId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("DateCreated")
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("FarmerId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Recipient_Code")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("FarmerId")
+                        .IsUnique();
 
                     b.ToTable("PaymentDetails");
                 });
@@ -345,6 +358,34 @@ namespace FCMS.Migrations
                     b.ToTable("ProductOrders");
                 });
 
+            modelBuilder.Entity("FCMS.Model.Entities.Review", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CustomerId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DateCreated")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FarmerId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int?>("Ratings")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FarmerId");
+
+                    b.ToTable("Review");
+                });
+
             modelBuilder.Entity("FCMS.Model.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -383,6 +424,9 @@ namespace FCMS.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
+                    b.Property<string>("Token")
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.ToTable("Users");
@@ -391,7 +435,7 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "3/29/2024",
+                            DateCreated = "4/1/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,
@@ -478,13 +522,17 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.PaymentDetails", b =>
                 {
-                    b.HasOne("FCMS.Model.Entities.Customer", "Customer")
+                    b.HasOne("FCMS.Model.Entities.Customer", null)
                         .WithMany("PaymentDetails")
-                        .HasForeignKey("CustomerId")
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("FCMS.Model.Entities.Farmer", "Farmer")
+                        .WithOne("PaymentDetails")
+                        .HasForeignKey("FCMS.Model.Entities.PaymentDetails", "FarmerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Customer");
+                    b.Navigation("Farmer");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Product", b =>
@@ -526,6 +574,13 @@ namespace FCMS.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("FCMS.Model.Entities.Review", b =>
+                {
+                    b.HasOne("FCMS.Model.Entities.Farmer", null)
+                        .WithMany("Reviews")
+                        .HasForeignKey("FarmerId");
+                });
+
             modelBuilder.Entity("FCMS.Model.Entities.Customer", b =>
                 {
                     b.Navigation("Orders");
@@ -537,7 +592,11 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.Farmer", b =>
                 {
+                    b.Navigation("PaymentDetails");
+
                     b.Navigation("Products");
+
+                    b.Navigation("Reviews");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Order", b =>

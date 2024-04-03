@@ -27,6 +27,7 @@ namespace FCMS.Migrations
                     ProfilePicture = table.Column<string>(type: "longtext", nullable: true),
                     Gender = table.Column<int>(type: "int", nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
+                    Token = table.Column<string>(type: "longtext", nullable: true),
                     DateCreated = table.Column<string>(type: "longtext", nullable: false)
                 },
                 constraints: table =>
@@ -111,6 +112,7 @@ namespace FCMS.Migrations
                     Id = table.Column<string>(type: "varchar(255)", nullable: false),
                     UserEmail = table.Column<string>(type: "longtext", nullable: false),
                     UserId = table.Column<string>(type: "varchar(255)", nullable: false),
+                    PaymentDetailId = table.Column<string>(type: "longtext", nullable: true),
                     DateCreated = table.Column<string>(type: "longtext", nullable: false)
                 },
                 constraints: table =>
@@ -130,11 +132,14 @@ namespace FCMS.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Recipient_Code = table.Column<string>(type: "longtext", nullable: true),
                     BankCode = table.Column<string>(type: "longtext", nullable: false),
                     AccountNumber = table.Column<string>(type: "longtext", nullable: false),
-                    AccountName = table.Column<string>(type: "longtext", nullable: false),
-                    AccountType = table.Column<string>(type: "longtext", nullable: false),
-                    CustomerId = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Name = table.Column<string>(type: "longtext", nullable: false),
+                    Currency = table.Column<string>(type: "longtext", nullable: true),
+                    FarmerId = table.Column<string>(type: "varchar(255)", nullable: false),
+                    CustomerId = table.Column<string>(type: "varchar(255)", nullable: true),
                     DateCreated = table.Column<string>(type: "longtext", nullable: false)
                 },
                 constraints: table =>
@@ -144,6 +149,11 @@ namespace FCMS.Migrations
                         name: "FK_PaymentDetails_Customers_CustomerId",
                         column: x => x.CustomerId,
                         principalTable: "Customers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_PaymentDetails_Farmers_FarmerId",
+                        column: x => x.FarmerId,
+                        principalTable: "Farmers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -170,6 +180,28 @@ namespace FCMS.Migrations
                         principalTable: "Farmers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Review",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Ratings = table.Column<int>(type: "int", nullable: true),
+                    Comments = table.Column<string>(type: "longtext", nullable: true),
+                    CustomerId = table.Column<string>(type: "longtext", nullable: true),
+                    FarmerId = table.Column<string>(type: "varchar(255)", nullable: true),
+                    DateCreated = table.Column<string>(type: "longtext", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Review", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Review_Farmers_FarmerId",
+                        column: x => x.FarmerId,
+                        principalTable: "Farmers",
+                        principalColumn: "Id");
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
@@ -207,7 +239,7 @@ namespace FCMS.Migrations
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false),
                     ReferenceNumber = table.Column<string>(type: "longtext", nullable: false),
-                    AuthorizationUri = table.Column<string>(type: "longtext", nullable: false),
+                    AuthorizationUri = table.Column<string>(type: "longtext", nullable: true),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Method = table.Column<int>(type: "int", nullable: false),
                     TransactionId = table.Column<string>(type: "longtext", nullable: false),
@@ -284,8 +316,8 @@ namespace FCMS.Migrations
 
             migrationBuilder.InsertData(
                 table: "Users",
-                columns: new[] { "Id", "DateCreated", "Email", "FirstName", "Gender", "LastName", "Password", "PhoneNumber", "ProfilePicture", "Role" },
-                values: new object[] { "ee4c458", "3/29/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1 });
+                columns: new[] { "Id", "DateCreated", "Email", "FirstName", "Gender", "LastName", "Password", "PhoneNumber", "ProfilePicture", "Role", "Token" },
+                values: new object[] { "ee4c458", "4/1/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1, null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",
@@ -326,6 +358,12 @@ namespace FCMS.Migrations
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PaymentDetails_FarmerId",
+                table: "PaymentDetails",
+                column: "FarmerId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Payments_CustomerId",
                 table: "Payments",
                 column: "CustomerId");
@@ -354,6 +392,11 @@ namespace FCMS.Migrations
                 name: "IX_Products_FarmerId",
                 table: "Products",
                 column: "FarmerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Review_FarmerId",
+                table: "Review",
+                column: "FarmerId");
         }
 
         /// <inheritdoc />
@@ -376,6 +419,9 @@ namespace FCMS.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProductOrders");
+
+            migrationBuilder.DropTable(
+                name: "Review");
 
             migrationBuilder.DropTable(
                 name: "Orders");

@@ -37,13 +37,13 @@ namespace FCMS.Implementations.Service
 
         public async Task<BaseResponse<FarmerDto>> CreateAsync(CreateFarmerRequestModel model)
         {
+
             if (model is null) throw new BadRequestException($"Model can't be null");
             var checkFarmer = await _userRepository.Get<User>(x => x.Email == model.Email);
             if(checkFarmer != null)
             {
                 throw new Exception($"User with the Email {model.Email} already exists");
             }
-
 
             var newUser = model.Adapt<User>();
             var newAddress = model.Adapt<Address>();
@@ -53,14 +53,6 @@ namespace FCMS.Implementations.Service
                 UserId = newUser.Id,
                 User = newUser,
             };
-            var paymentDetails = new PaymentDetails
-            {
-                BankCode = model.BankCode,
-                Type = "Nuban",
-                AccountName = model.AccountName,
-                AccountNumber = model.AccountNumber,
-                FarmerId = newFarmer.Id,
-            };
 
             var farmerImage = await _fileManager.UploadFileToSystem(model.ProfilePicture);
             if(!farmerImage.Status)
@@ -68,10 +60,6 @@ namespace FCMS.Implementations.Service
                 throw new Exception($"{farmerImage.Message}");
             };
 
-
-            var newPaymentDetails = await CreateTransferRecipientAsync(model.AccountName, model.AccountNumber, model.BankCode);
-
-            paymentDetails.Recipient_Code = newPaymentDetails.Recipient_Code;
             newUser.ProfilePicture = farmerImage.Data.Name;
             newUser.Farmer = newFarmer;
             newFarmer.User = newUser;
@@ -83,7 +71,6 @@ namespace FCMS.Implementations.Service
             _farmerRepository.Insert<Farmer>(newFarmer);
             _userRepository.Insert<User>(newUser);
             _addressRepository.Insert<Address>(newAddress);
-            _paymentDetails.Insert<PaymentDetails>(newPaymentDetails);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -205,35 +192,6 @@ namespace FCMS.Implementations.Service
         }
 
 
-        private async Task<PaymentDetails> CreateTransferRecipientAsync(string name, string accountNumber, string bankCode)
-        {
-            string url = "https://api.paystack.co/transferrecipient";
-            string contentType = "application/json";
-            string data = JsonSerializer.Serialize(new
-            {
-                type = "nuban",
-                name,
-                account_number = accountNumber,
-                bank_code = bankCode,
-                currency = "NGN",
-            });
 
-            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _secretKey);
-            _client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(contentType));
-
-            var content = new StringContent(data, Encoding.UTF8, contentType);
-
-            HttpResponseMessage response = await _client.PostAsync(url, content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<PaymentDetails>(responseBody);
-            }
-            else
-            {
-                throw new Exception($"Error: {response.StatusCode}");
-            }
-        }
     }
 }

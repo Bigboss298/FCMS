@@ -1,6 +1,10 @@
 ﻿using FCMS.Interfaces.Repository;
 using FCMS.Model.Entities;
 using FCMS.Model.Exceptions;
+using Newtonsoft.Json;
+using Paystack.Net.SDK;
+using Paystack.Net.SDK.Models;
+using Paystack.Net.SDK.Models.Transfers.TransferDetails;
 using System.Text;
 
 namespace FCMS.Gateway
@@ -15,8 +19,9 @@ namespace FCMS.Gateway
         private readonly IOrderRepository _orderRepository;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IProductOrderRepository _productOrderRepository;
+        private readonly IPaymentDetails _paymentDetails;
 
-        public PaystackService(ICustomerRepository customerRepository, IProductRepository productRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IOrderRepository orderRepository, IPaymentRepository paymentRepository, IProductOrderRepository productOrderRepository)
+        public PaystackService(ICustomerRepository customerRepository, IProductRepository productRepository, IConfiguration configuration, IUnitOfWork unitOfWork, IOrderRepository orderRepository, IPaymentRepository paymentRepository, IProductOrderRepository productOrderRepository, IPaymentDetails paymentDetails)
         {
             _customerRepoitory = customerRepository;
             _productRepository = productRepository;
@@ -26,7 +31,7 @@ namespace FCMS.Gateway
             _orderRepository = orderRepository;
             _paymentRepository = paymentRepository;
             _productOrderRepository = productOrderRepository;
-
+            _paymentDetails = paymentDetails;
         }
         public async Task<string> GetTransactionRecieptAsync(string transactionReference)
         {
@@ -58,6 +63,7 @@ namespace FCMS.Gateway
         {
             var product = await _productRepository.Get(x => x.Id == model.productId);
             var customer = await _customerRepoitory.Get(x => x.Id == model.CustomerId);
+            var paymentDetails = await _paymentDetails.Get<PaymentDetails>(x => x.FarmerId == product.FarmerId);
 
             if (product is null || customer is null)
             {
@@ -70,9 +76,9 @@ namespace FCMS.Gateway
             string data = Newtonsoft.Json.JsonConvert.SerializeObject(new
             {
                 source = "balance",
-                reason = "Calm down",
+                reason = "",
                 amount = model.Amount * 100,
-                recipient = product.Farmer.PaymentDetails.Recipient_Code,
+                recipient = paymentDetails.Recipient_Code,
             });
 
             using (HttpClient client = new HttpClient())
@@ -126,6 +132,81 @@ namespace FCMS.Gateway
                 }
             }
         }
+
+        //public async Task<PaymentInitalizationResponseModel> InitializeTransaction(string email, int amount, string firstName = null,
+        //                                                                       string lastName = null, string callbackUrl = null,
+        //                                                                       string reference = null, bool makeReferenceUnique = false)
+        //{
+
+        //    var client = HttpConnection.CreateClient(this._secretKey);
+
+        //    var bodyKeyValues = new List<KeyValuePair<string, string>>();
+
+        //    bodyKeyValues.Add(new KeyValuePair<string, string>("email", email));
+        //    bodyKeyValues.Add(new KeyValuePair<string, string>("amount", amount.ToString()));
+
+
+        //    //Optional Params
+
+        //    if (!string.IsNullOrWhiteSpace(firstName))
+        //    {
+        //        bodyKeyValues.Add(new KeyValuePair<string, string>("first_name", firstName));
+        //    }
+        //    if (!string.IsNullOrWhiteSpace(lastName))
+        //    {
+        //        bodyKeyValues.Add(new KeyValuePair<string, string>("last_name", lastName));
+        //    }
+
+        //    if (!string.IsNullOrWhiteSpace(callbackUrl))
+        //    {
+        //        bodyKeyValues.Add(new KeyValuePair<string, string>("callback_url", callbackUrl));
+        //    }
+
+        //    var formContent = new FormUrlEncodedContent(bodyKeyValues);
+
+        //    var response = await client.PostAsync("transaction/initialize", formContent);
+
+        //    var json = await response.Content.ReadAsStringAsync();
+
+        //    return JsonConvert.DeserializeObject<PaymentInitalizationResponseModel>(json);
+        //}
+
+        public async Task<PaymentInitalizationResponseModel> InitializeTransaction(TransactionInitializationRequestModel requestObj)
+        {
+
+            var client = HttpConnection.CreateClient(this._secretKey);
+
+            var bodyKeyValues = new List<KeyValuePair<string, string>>();
+
+
+            foreach (var property in requestObj.GetType().GetProperties())
+            {
+                if (property.GetValue(requestObj) != null)
+                {
+                    bodyKeyValues.Add(new KeyValuePair<string, string>(property.Name, property.GetValue(requestObj).ToString()));
+                }
+            }
+
+            var formContent = new FormUrlEncodedContent(bodyKeyValues);
+
+            var response = await client.PostAsync("transaction/initialize", formContent);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<PaymentInitalizationResponseModel>(json);
+        }
+
+        public async Task<TransactionResponseModel> VerifyTransaction(string reference)
+        {
+            var client = HttpConnection.CreateClient(this._secretKey);
+            var response = await client.GetAsync($"transaction/verify/{reference}");
+
+            var json = await response.Content.ReadAsStringAsync();
+
+
+            return JsonConvert.DeserializeObject<TransactionResponseModel>(json);
+        }
+
 
     }
 }

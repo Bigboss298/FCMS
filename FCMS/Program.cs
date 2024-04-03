@@ -90,6 +90,8 @@ builder.Services.AddScoped<IProductOrderRepository, ProductOrderRepository>();
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
+builder.Services.AddScoped<IPaymentDetails, PaymentDetails>();
+
 #endregion
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("MyConnection")));
@@ -180,12 +182,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FCMS v1"));
-}
+//}
 
 app.UseStaticFiles();
 
