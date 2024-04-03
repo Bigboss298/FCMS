@@ -36,6 +36,7 @@ namespace FCMS.Persistence
                         PhoneNumber = "08155850462",
                         Gender = (Gender)1,
                         Role = (Role)1,
+
                     }
                 );
             modelBuilder.Entity<Payment>()
