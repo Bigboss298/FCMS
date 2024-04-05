@@ -1,6 +1,6 @@
 # How to install
-Dotnet version => 7.0
-Install .Net SDK 7.0
+Dotnet version => 7.0 <br />
+Install .Net SDK 7.0 from your browser
 ## To install all the packages 
 # 
 prompt “dotnet restore” in the terminal to install all the packages
