@@ -7,5 +7,6 @@
         public string Content { get; set; } = default!;
         public bool Seen { get; set; } = false;
         public DateTime Timestamp { get; set; }
+        public User? User { get; set; }
     }
 }

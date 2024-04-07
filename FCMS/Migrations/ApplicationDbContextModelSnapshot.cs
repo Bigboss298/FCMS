@@ -118,6 +118,28 @@ namespace FCMS.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("FCMS.Model.Entities.Faq", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DateCreated")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Faqs");
+                });
+
             modelBuilder.Entity("FCMS.Model.Entities.Farmer", b =>
                 {
                     b.Property<string>("Id")
@@ -380,7 +402,7 @@ namespace FCMS.Migrations
 
                     b.HasIndex("FarmerId");
 
-                    b.ToTable("Review");
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.User", b =>
@@ -432,7 +454,7 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "4/1/2024",
+                            DateCreated = "4/7/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,
@@ -454,9 +476,11 @@ namespace FCMS.Migrations
 
             modelBuilder.Entity("FCMS.Model.Entities.Chat", b =>
                 {
-                    b.HasOne("FCMS.Model.Entities.User", null)
+                    b.HasOne("FCMS.Model.Entities.User", "User")
                         .WithMany("Chats")
                         .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Customer", b =>

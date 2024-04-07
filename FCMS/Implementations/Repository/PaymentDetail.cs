@@ -3,9 +3,9 @@ using FCMS.Persistence;
 
 namespace FCMS.Implementations.Repository
 {
-    public class PaymentDetails : BaseRepository, IPaymentDetails
+    public class PaymentDetail : BaseRepository, IPaymentDetails
     {
-        public PaymentDetails(ApplicationDbContext context) : base(context)
+        public PaymentDetail(ApplicationDbContext context) : base(context)
         {
             
         }

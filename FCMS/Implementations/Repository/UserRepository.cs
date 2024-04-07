@@ -13,6 +13,16 @@ namespace FCMS.Implementations.Repository
         public UserRepository(ApplicationDbContext context) : base(context)
         {
         }
+
+        public async Task<User> Get(Expression<Func<User, bool>> expression)
+        {
+            return await _context.Users
+                .Include(x => x.Farmer)
+                .Include(x => x.Customer)
+                .Include(x => x.Chats)
+                .FirstOrDefaultAsync(expression);
+        }
+
         public Task<BaseResponse<User>> GetByAddress(Expression<Func<User, bool>> expression)
         {
             throw new NotImplementedException();

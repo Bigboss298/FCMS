@@ -84,13 +84,19 @@ var configuration = builder.Configuration;
 var paystackApiKey = configuration["Paystack:ApiKey"];
 builder.Services.AddScoped<IPaystackService, PaystackService>();
 
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IChatRepository, ChatRepository>();
+
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddScoped<IProductOrderRepository, ProductOrderRepository>();
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
-builder.Services.AddScoped<IPaymentDetails, PaymentDetails>();
+builder.Services.AddScoped<IPaymentDetails, PaymentDetail>();
 
 #endregion
 

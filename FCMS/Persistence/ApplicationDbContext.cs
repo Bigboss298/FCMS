@@ -21,6 +21,8 @@ namespace FCMS.Persistence
         public DbSet<Payment> Payments { get; set; }
         public DbSet<PaymentDetails> PaymentDetails { get; set; }
         public DbSet<ProductOrder> ProductOrders { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Faq> Faqs { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

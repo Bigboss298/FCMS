@@ -4,8 +4,9 @@ namespace FCMS.Interfaces.Repository
 {
     public interface IChatRepository : IBaseRepository
     {
-        Task<List<Chat>> GetAllUnSeenChatAsync(int recieverId);
-        Task<List<Chat>> GetAllUnSeenChatAsync(int senderId, int recieverId);
-        Task<List<Chat>> GetAllChatFromASender(int recieverId, int senderId);
+        Task<List<Chat>> GetAllUnSeenChatAsync(string recieverId);
+        Task<List<Chat>> GetAllUnSeenChatAsync(string farmerId, string customerId);
+        Task<List<Chat>> GetAllChatFromASender(string farmerId, string customerId);
+        Task<List<Chat>> GetChatByChatId(string loginId, string senderId, string chatId);
     }
 }

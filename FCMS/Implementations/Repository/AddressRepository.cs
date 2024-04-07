@@ -7,6 +7,7 @@ namespace FCMS.Implementations.Repository
     {
         public AddressRepository(ApplicationDbContext context) : base(context)
         {
+
         }
     }
 }

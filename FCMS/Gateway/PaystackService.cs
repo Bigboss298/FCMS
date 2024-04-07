@@ -1,7 +1,9 @@
-﻿using FCMS.Interfaces.Repository;
+﻿using FCMS.Implementations.Repository;
+using FCMS.Interfaces.Repository;
 using FCMS.Model.Entities;
 using FCMS.Model.Exceptions;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Cms;
 using Paystack.Net.SDK;
 using Paystack.Net.SDK.Models;
 using Paystack.Net.SDK.Models.Transfers.TransferDetails;
@@ -61,6 +63,10 @@ namespace FCMS.Gateway
 
         public async Task<string> InitiatePayment(CreatePaymentRequestModel model)
         {
+            if(model is null)
+            {
+                throw new BadRequestException("Model cant be null");
+            }
             var product = await _productRepository.Get(x => x.Id == model.productId);
             var customer = await _customerRepoitory.Get(x => x.Id == model.CustomerId);
             var paymentDetails = await _paymentDetails.Get<PaymentDetails>(x => x.FarmerId == product.FarmerId);
@@ -71,61 +77,61 @@ namespace FCMS.Gateway
             }
 
             string url = "https://api.paystack.co/transfer";
-            string authorization = $"{_secretKey}";
+            string authorization = $"Bearer {_secretKey}";
             string contentType = "application/json";
-            string data = Newtonsoft.Json.JsonConvert.SerializeObject(new
-            {
-                source = "balance",
-                reason = "",
-                amount = model.Amount * 100,
-                recipient = paymentDetails.Recipient_Code,
-            });
 
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authorization);
-                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(contentType));
+            string jsonData = $@"
+        {{
+          ""source"": ""balance"",
+          ""reason"": ""{model.reason}"",
+          ""amount"": {model.Amount},
+          ""recipient"": ""{model.recipient}""
+        }}";
 
-                var content = new StringContent(data, Encoding.UTF8, contentType);
+            var content = new StringContent(jsonData, Encoding.UTF8, contentType);
 
-                HttpResponseMessage response = await client.PostAsync(url, content);
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("Authorization", authorization);
 
-                if (response.IsSuccessStatusCode)
+            HttpResponseMessage response = await client.PostAsync(url, content);
+
+
+            if (response.IsSuccessStatusCode)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    _ = product.Quantity - model.quantity;
-                    Order order = new()
-                    {
-                        ProductId = product.Id,
-                        Quantity = model.quantity,
-                        Price = model.Amount,
-                        CustomerId = customer.Id,
-                    };
-                    Payment payment = new()
-                    {
-                        ReferenceNumber = $"FCMS/{Guid.NewGuid().ToString()[..10]}",
-                        Amount = model.Amount,
-                        TransactionId = Guid.NewGuid().ToString()[..9],
-                        IsPaid = true,
-                        Status = Model.Enum.PaymentStatus.success,
-                        CustomerId = customer.Id,
-                        ProductId = product.Id,
-                    };
+                string responseBody = await response.Content.ReadAsStringAsync();
+                _ = product.Quantity - model.quantity;
+                Order order = new()
+                {
+                    ProductId = product.Id,
+                    Quantity = model.quantity,
+                    Price = model.Amount,
+                    CustomerId = customer.Id,
+                };
+                Payment payment = new()
+                {
+                    ReferenceNumber = $"FCMS/{Guid.NewGuid().ToString()[..10]}",
+                    Amount = model.Amount,
+                    TransactionId = Guid.NewGuid().ToString()[..9],
+                    IsPaid = true,
+                    Status = Model.Enum.PaymentStatus.success,
+                    CustomerId = customer.Id,
+                    ProductId = product.Id,
+                };
 
-                    ProductOrder porder = new()
-                    {
-                        ProductId = product.Id,
-                        OrderId = order.Id,
-                    };
+                ProductOrder porder = new()
+                {
+                    ProductId = product.Id,
+                    OrderId = order.Id,
+                };
 
-                    _orderRepository.Insert<Order>(order);
-                    _paymentRepository.Insert<Payment>(payment);
-                    _productOrderRepository.Insert<ProductOrder>(porder);
-                    _productRepository.Update<Product>(product);
-                    await _unitOfWork.SaveChangesAsync();
+                _orderRepository.Insert<Order>(order);
+                _paymentRepository.Insert<Payment>(payment);
+                _productOrderRepository.Insert<ProductOrder>(porder);
+                _productRepository.Update<Product>(product);
+                await _unitOfWork.SaveChangesAsync();
 
-                    return responseBody;
-                }
+                return responseBody;
+            }
                 else
                 {
                     throw new Exception($"Payment initiation failed. Response: {await response.Content.ReadAsStringAsync()}");
@@ -133,33 +139,21 @@ namespace FCMS.Gateway
             }
         }
 
-        //public async Task<PaymentInitalizationResponseModel> InitializeTransaction(string email, int amount, string firstName = null,
-        //                                                                       string lastName = null, string callbackUrl = null,
-        //                                                                       string reference = null, bool makeReferenceUnique = false)
+
+        //public async Task<PaymentInitalizationResponseModel> InitializeTransaction(TransactionInitializationRequestModel requestObj)
         //{
 
         //    var client = HttpConnection.CreateClient(this._secretKey);
 
         //    var bodyKeyValues = new List<KeyValuePair<string, string>>();
 
-        //    bodyKeyValues.Add(new KeyValuePair<string, string>("email", email));
-        //    bodyKeyValues.Add(new KeyValuePair<string, string>("amount", amount.ToString()));
 
-
-        //    //Optional Params
-
-        //    if (!string.IsNullOrWhiteSpace(firstName))
+        //    foreach (var property in requestObj.GetType().GetProperties())
         //    {
-        //        bodyKeyValues.Add(new KeyValuePair<string, string>("first_name", firstName));
-        //    }
-        //    if (!string.IsNullOrWhiteSpace(lastName))
-        //    {
-        //        bodyKeyValues.Add(new KeyValuePair<string, string>("last_name", lastName));
-        //    }
-
-        //    if (!string.IsNullOrWhiteSpace(callbackUrl))
-        //    {
-        //        bodyKeyValues.Add(new KeyValuePair<string, string>("callback_url", callbackUrl));
+        //        if (property.GetValue(requestObj) != null)
+        //        {
+        //            bodyKeyValues.Add(new KeyValuePair<string, string>(property.Name, property.GetValue(requestObj).ToString()));
+        //        }
         //    }
 
         //    var formContent = new FormUrlEncodedContent(bodyKeyValues);
@@ -171,42 +165,54 @@ namespace FCMS.Gateway
         //    return JsonConvert.DeserializeObject<PaymentInitalizationResponseModel>(json);
         //}
 
-        public async Task<PaymentInitalizationResponseModel> InitializeTransaction(TransactionInitializationRequestModel requestObj)
-        {
+        //public async Task<TransactionResponseModel> VerifyTransaction(string reference)
+        //{
+        //    var client = HttpConnection.CreateClient(this._secretKey);
+        //    var response = await client.GetAsync($"transaction/verify/{reference}");
 
-            var client = HttpConnection.CreateClient(this._secretKey);
-
-            var bodyKeyValues = new List<KeyValuePair<string, string>>();
-
-
-            foreach (var property in requestObj.GetType().GetProperties())
-            {
-                if (property.GetValue(requestObj) != null)
-                {
-                    bodyKeyValues.Add(new KeyValuePair<string, string>(property.Name, property.GetValue(requestObj).ToString()));
-                }
-            }
-
-            var formContent = new FormUrlEncodedContent(bodyKeyValues);
-
-            var response = await client.PostAsync("transaction/initialize", formContent);
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<PaymentInitalizationResponseModel>(json);
-        }
-
-        public async Task<TransactionResponseModel> VerifyTransaction(string reference)
-        {
-            var client = HttpConnection.CreateClient(this._secretKey);
-            var response = await client.GetAsync($"transaction/verify/{reference}");
-
-            var json = await response.Content.ReadAsStringAsync();
+        //    var json = await response.Content.ReadAsStringAsync();
 
 
-            return JsonConvert.DeserializeObject<TransactionResponseModel>(json);
-        }
+        //    return JsonConvert.DeserializeObject<TransactionResponseModel>(json);
+        //}
 
 
     }
-}
+
+
+
+
+
+//string responseBody = await response.Content.ReadAsStringAsync();
+//_ = product.Quantity - model.quantity;
+//Order order = new()
+//{
+//    ProductId = product.Id,
+//    Quantity = model.quantity,
+//    Price = model.Amount,
+//    CustomerId = customer.Id,
+//};
+//Payment payment = new()
+//{
+//    ReferenceNumber = $"FCMS/{Guid.NewGuid().ToString()[..10]}",
+//    Amount = model.Amount,
+//    TransactionId = Guid.NewGuid().ToString()[..9],
+//    IsPaid = true,
+//    Status = Model.Enum.PaymentStatus.success,
+//    CustomerId = customer.Id,
+//    ProductId = product.Id,
+//};
+
+//ProductOrder porder = new()
+//{
+//    ProductId = product.Id,
+//    OrderId = order.Id,
+//};
+
+//_orderRepository.Insert<Order>(order);
+//_paymentRepository.Insert<Payment>(payment);
+//_productOrderRepository.Insert<ProductOrder>(porder);
+//_productRepository.Update<Product>(product);
+//await _unitOfWork.SaveChangesAsync();
+
+//return responseBody;
