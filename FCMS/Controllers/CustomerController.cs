@@ -16,7 +16,7 @@ namespace FCMS.Controllers
         {
             _customerService = customerService;
         }
-        [Authorize]
+        //[Authorize]
         [HttpGet("Customers")]
         public async Task<IActionResult> GetCustomers()
         {
@@ -31,7 +31,7 @@ namespace FCMS.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("Customer")]
         public async Task<IActionResult> Get(string id)
         {

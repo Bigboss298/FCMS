@@ -37,7 +37,7 @@ namespace FCMS.Controllers
             return BadRequest("Invalid details");
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("Farmer")]
         public async Task<IActionResult> Get(string id)
         {
@@ -56,7 +56,7 @@ namespace FCMS.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("Farmers")]
         public async Task<IActionResult> GetFarmers()
         {
