@@ -1,12 +1,13 @@
 ﻿using FCMS.Model.DTOs;
+using FCMS.Model.Enum;
 
 namespace FCMS.Interfaces.Service
 {
     public interface IChatService
     {
-        Task<BaseResponse<ChatDto>> CreateChat(CreateChatRequestModel model, int id, int recieverId);
-        Task<BaseResponse<ChatDto>> GetChatFromASenderAsync(int senderId, int recieverId);
-        Task<BaseResponse<ChatDto>> MarkAllChatsAsReadAsync(int senderId, int recieverId);
-        Task<BaseResponse<ChatDto>> GetAllUnSeenChatAsync(int recieverId);
+        Task<BaseResponse<ChatDto>> CreateChat(CreateChatRequestModel model, string senderid, string recieverId);
+        Task<ChatLists> GetChatFromASenderAsync(string senderId, string recieverId);
+        Task<BaseResponse<ChatDto>> MarkAllChatsAsReadAsync(string senderId, string recieverId);
+        Task<BaseResponse<ChatDto>> GetAllUnSeenChatAsync(string recieverId);
     }
 }

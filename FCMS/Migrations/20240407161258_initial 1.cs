@@ -6,12 +6,27 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FCMS.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class initial1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Faqs",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "varchar(255)", nullable: false),
+                    Question = table.Column<string>(type: "longtext", nullable: false),
+                    Answer = table.Column<string>(type: "longtext", nullable: false),
+                    DateCreated = table.Column<string>(type: "longtext", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Faqs", x => x.Id);
+                })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -184,7 +199,7 @@ namespace FCMS.Migrations
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Review",
+                name: "Reviews",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false),
@@ -196,9 +211,9 @@ namespace FCMS.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Review", x => x.Id);
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Review_Farmers_FarmerId",
+                        name: "FK_Reviews_Farmers_FarmerId",
                         column: x => x.FarmerId,
                         principalTable: "Farmers",
                         principalColumn: "Id");
@@ -317,7 +332,7 @@ namespace FCMS.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "DateCreated", "Email", "FirstName", "Gender", "LastName", "Password", "PhoneNumber", "ProfilePicture", "Role", "Token" },
-                values: new object[] { "ee4c458", "4/1/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1, null });
+                values: new object[] { "ee4c458", "4/7/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1, null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",
@@ -394,8 +409,8 @@ namespace FCMS.Migrations
                 column: "FarmerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Review_FarmerId",
-                table: "Review",
+                name: "IX_Reviews_FarmerId",
+                table: "Reviews",
                 column: "FarmerId");
         }
 
@@ -407,6 +422,9 @@ namespace FCMS.Migrations
 
             migrationBuilder.DropTable(
                 name: "Chats");
+
+            migrationBuilder.DropTable(
+                name: "Faqs");
 
             migrationBuilder.DropTable(
                 name: "PaymentDetails");
@@ -421,7 +439,7 @@ namespace FCMS.Migrations
                 name: "ProductOrders");
 
             migrationBuilder.DropTable(
-                name: "Review");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "Orders");

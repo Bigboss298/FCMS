@@ -5,6 +5,10 @@ using FCMS.Model.DTOs;
 using FCMS.Model.Entities;
 using FCMS.Model.Exceptions;
 using Mapster;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.IdentityModel.Abstractions;
+using MySqlX.XDevAPI;
+using Paystack.Net.SDK;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -47,6 +51,7 @@ namespace FCMS.Implementations.Service
 
             var newUser = model.Adapt<User>();
             var newAddress = model.Adapt<Address>();
+            var newPaymentDetails = model.Adapt<PaymentDetails>();
             var newFarmer = new Farmer
             {
                 UserEmail = newUser.Email,
@@ -60,17 +65,32 @@ namespace FCMS.Implementations.Service
                 throw new Exception($"{farmerImage.Message}");
             };
 
+            var recipientCode = await CreateTransferRecipient(_secretKey, model.AccountName, model.AccountNumber, model.BankCode, "NGN");
+
+            
+
             newUser.ProfilePicture = farmerImage.Data.Name;
             newUser.Farmer = newFarmer;
             newFarmer.User = newUser;
             newFarmer.UserId = newUser.Id;
+            newFarmer.PaymentDetailId = newPaymentDetails.Id;
+            newFarmer.PaymentDetails = newPaymentDetails;
             newUser.Address = newAddress;
             newAddress.UserId = newUser.Id;
+            newPaymentDetails.Name = model.AccountName;
+            newPaymentDetails.Type = Model.Enum.BankType.Nuban;
+            newPaymentDetails.Recipient_Code = recipientCode;
+            newPaymentDetails.Currency = "NGN";
+            newPaymentDetails.Farmer = newFarmer;
+            newPaymentDetails.FarmerId = newFarmer.Id;
+
+
 
 
             _farmerRepository.Insert<Farmer>(newFarmer);
             _userRepository.Insert<User>(newUser);
             _addressRepository.Insert<Address>(newAddress);
+            _paymentDetails.Insert<PaymentDetails>(newPaymentDetails);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -192,6 +212,76 @@ namespace FCMS.Implementations.Service
         }
 
 
+        //private async Task<string> GetRecipientCode(PaymentDetailsDto model)
+        //{
+        //    var url = "https://api.paystack.co/transferrecipient";
+        //    var authorization = "Bearer " + _secretKey;
+        //    var contentType = "application/json";
+        //    var data = new
+        //    {
+        //        type = "nuban",
+        //        name = model.AccountName,
+        //        account_number = model.AccountNumber,
+        //        bank_code = model.BankCode,
+        //        currency = "NGN",
+        //    };
 
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Authorization", "Bearer sk_test_81ea41faa2918934deb1efb644a4b94217ebdf48");
+
+        //        var json = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+        //        var content = new StringContent(json, Encoding.UTF8, contentType);
+
+        //        HttpResponseMessage response = await httpClient.PostAsync(url, content);
+
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            var resultJson = await response.Content.ReadAsStringAsync();
+        //            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<RecipientData>(resultJson);
+        //            return result.recipient_code;
+        //        }
+        //        else
+        //        {
+        //            throw new BadRequestException("Recipient Code could not be generated");
+        //        }
+        //    }
+        //}
+        public static async Task<string> CreateTransferRecipient(string secretKey, string recipientName, string accountNumber, string bankCode, string currency)
+        {
+            string url = "https://api.paystack.co/transferrecipient";
+            string authorization = $"Bearer {secretKey}";
+            string contentType = "application/json";
+
+            string jsonData = $@"
+        {{
+          ""type"": ""nuban"",
+          ""name"": ""{recipientName}"",
+          ""account_number"": ""{accountNumber}"",
+          ""bank_code"": ""{bankCode}"",
+          ""currency"": ""{currency}""
+        }}";
+
+            var content = new StringContent(jsonData, Encoding.UTF8, contentType);
+
+            _client.DefaultRequestHeaders.Clear();
+            _client.DefaultRequestHeaders.Add("Authorization", authorization);
+
+            HttpResponseMessage response = await _client.PostAsync(url, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseContent = await response.Content.ReadAsStringAsync();
+                JsonDocument jsonDoc = JsonDocument.Parse(responseContent);
+                JsonElement root = jsonDoc.RootElement;
+                JsonElement recipientCodeElement = root.GetProperty("data").GetProperty("recipient_code");
+                string recipientCode = recipientCodeElement.GetString();
+                return recipientCode;
+            }
+            else
+            {
+                throw new BadRequestException(response.ReasonPhrase);
+            }
+        }
     }
 }

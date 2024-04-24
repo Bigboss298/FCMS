@@ -26,9 +26,9 @@ namespace FCMS.Model.DTOs
         public string City { get; set; } = default!;
         public string State { get; set; } = default!;
         public string Language { get; set; } = default!;
-        //public string BankCode { get; set; } = default!;
-        //public string AccountNumber { get; set; } = default!;
-        //public string AccountName { get; set; } = default!;
+        public string BankCode { get; set; } = default!;
+        public string AccountNumber { get; set; } = default!;
+        public string AccountName { get; set; } = default!;
     }
 
     public class UpdateFarmerRequestModel

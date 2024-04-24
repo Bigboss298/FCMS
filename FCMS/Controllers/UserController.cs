@@ -37,7 +37,7 @@ namespace FCMS.Controllers
             return BadRequest("Invalid Login Parameters");
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("Delete")]
         public async Task<IActionResult> Delete([FromRoute] string id)
         {
@@ -56,7 +56,7 @@ namespace FCMS.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("Update")]
         public async Task<IActionResult> UpdateUser(UpdateUserRequestModel model)
         {
@@ -75,7 +75,7 @@ namespace FCMS.Controllers
             return BadRequest("Invalid parameters");
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("GetUsers")]
         public async Task<IActionResult> GetUsers()
         {

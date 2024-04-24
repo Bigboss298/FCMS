@@ -8,10 +8,12 @@
     {
         public decimal Amount { get; set; }
         public string Email { get; set; }
+        public string? reason { get; set; } 
         public string PhoneNumber { get; set; }
         public string CustomerId { get; set; }
         public string productId { get; set; }
         public int quantity { get; set; }
+        public string recipient { get; set; }
     }
     public class PaymentInitalizationResponseModel
     {

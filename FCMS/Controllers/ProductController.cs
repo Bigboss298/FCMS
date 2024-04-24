@@ -17,7 +17,7 @@ namespace FCMS.Controllers
         {
             _productService = productService;
         }
-        [Authorize]
+        //[Authorize]
         [HttpGet("Products")]
         public async Task<IActionResult> Products()
         {
@@ -25,7 +25,7 @@ namespace FCMS.Controllers
             return Ok(products);
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("GetByAny")]
         public IActionResult GetByAnyAsync(string param)
         {
@@ -44,7 +44,7 @@ namespace FCMS.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpGet("GetById")]
         public async Task<IActionResult> GetByIdAsync(string id)
         {
@@ -64,7 +64,7 @@ namespace FCMS.Controllers
 
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpDelete("Delete")]
         public async Task<IActionResult> DeleteAsync(string id)
         {
@@ -76,7 +76,7 @@ namespace FCMS.Controllers
             return BadRequest("id not valid!!!");
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateAsync([FromForm]UpdateProductRequestModel model, string id)
         {
@@ -95,7 +95,7 @@ namespace FCMS.Controllers
             }
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPost("Create")]
         public async Task<IActionResult> CreateAsync([FromForm] CreateProductRequestModel model)
         {

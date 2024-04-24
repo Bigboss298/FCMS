@@ -8,5 +8,6 @@ namespace FCMS.Interfaces.Repository
     {
         Task<BaseResponse<User>> GetByAddress(Expression<Func<User, bool>> expression);
         Task<User> LoginAsync(UserLoginRequestModel model);
+        Task<User> Get(Expression<Func<User, bool>> expression);    
     }
 }
