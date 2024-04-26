@@ -71,6 +71,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IFarmerService, FarmerService>();
 builder.Services.AddScoped<IFarmerRepository, FarmerRepository>();
 
+builder.Services.AddScoped<IFaqService, FaqService>();
+builder.Services.AddScoped<IFaqRepository, FaqRepository>();
+
 
 builder.Services.AddScoped<IFileManager, FileManager>();
 
@@ -100,7 +103,7 @@ builder.Services.AddScoped<IPaymentDetails, PaymentDetail>();
 
 #endregion
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("MyConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
 
