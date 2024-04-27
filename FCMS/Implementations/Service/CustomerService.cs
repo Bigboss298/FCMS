@@ -1,4 +1,5 @@
 ﻿using FCMS.FileManager;
+using FCMS.Gateway.EmailService;
 using FCMS.Interfaces.Repository;
 using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
@@ -7,6 +8,7 @@ using FCMS.Model.Enum;
 using FCMS.Model.Exceptions;
 using Mapster;
 using Microsoft.Extensions.Hosting;
+//using static Google.Protobuf.Collections.MapField<TKey, TValue>;
 
 namespace FCMS.Implementations.Service
 {
@@ -17,9 +19,10 @@ namespace FCMS.Implementations.Service
         private readonly IAddressRepository _addressRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileManager _fileManager;
+        private readonly IMailService _mailServices;
         private readonly IWebHostEnvironment _hostEnvironment;
 
-        public CustomerService(ICustomerRepository customerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IWebHostEnvironment hostEnvironment, IAddressRepository addressRepository)
+        public CustomerService(ICustomerRepository customerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IWebHostEnvironment hostEnvironment, IAddressRepository addressRepository,IMailService mailService)
         {
             _customerRepository = customerRepository;
             _userRepository = userRepository;
@@ -27,6 +30,7 @@ namespace FCMS.Implementations.Service
             _fileManager = fileManager;
             _hostEnvironment = hostEnvironment;
             _addressRepository = addressRepository;
+            _mailServices = mailService;
         }
 
         public async Task<BaseResponse<CustomerDto>> CreateAsync(CreateCustomerRequestModel customer)
@@ -57,11 +61,20 @@ namespace FCMS.Implementations.Service
                 newUser.Address = newAddress;
                 newAddress.UserId = newUser.Id;
 
+                var mailRequest = new MailRequestDto
+                {
+                    Subject = "Welcome",
+                    ToEmail = customer.Email,
+                    ToName = customer.FirstName,
+                    HtmlContent = $"<html><body><h1>Hello {customer.FirstName + "    " + customer.LastName }, Welcome to FCMS International Limited.</h1><h4> <a href=https://www.canva.com/design/DAFz_ES31XE/EtoIii982LTYgm6K-VYZgg/edit?utm_content=DAFz_ES31XE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton></h4></body></html>"
+
+                };
+
                 _userRepository.Insert<User>(newUser);
                 _customerRepository.Insert<Customer>(newCustomer);
                 _addressRepository.Insert<Address>(newAddress);
-                
-                await _unitOfWork.SaveChangesAsync();
+                 _mailServices.SendEmailAsync(mailRequest);
+                  await _unitOfWork.SaveChangesAsync();
 
                 return new BaseResponse<CustomerDto>
                 {
