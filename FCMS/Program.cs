@@ -1,6 +1,7 @@
 using FCMS.Auth;
 using FCMS.FileManager;
 using FCMS.Gateway;
+using FCMS.Gateway.EmailService;
 using FCMS.Implementations.Repository;
 using FCMS.Implementations.Service;
 using FCMS.Interfaces.Repository;
@@ -74,6 +75,7 @@ builder.Services.AddScoped<IFarmerRepository, FarmerRepository>();
 builder.Services.AddScoped<IFaqService, FaqService>();
 builder.Services.AddScoped<IFaqRepository, FaqRepository>();
 
+builder.Services.AddScoped<IMailService, MailService>();
 
 builder.Services.AddScoped<IFileManager, FileManager>();
 

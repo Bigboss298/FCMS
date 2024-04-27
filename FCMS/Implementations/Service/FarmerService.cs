@@ -1,4 +1,5 @@
 ﻿using FCMS.FileManager;
+using FCMS.Gateway.EmailService;
 using FCMS.Interfaces.Repository;
 using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Abstractions;
 using MySqlX.XDevAPI;
 using Paystack.Net.SDK;
+using Paystack.Net.SDK.Models;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -21,13 +23,14 @@ namespace FCMS.Implementations.Service
         private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileManager _fileManager;
+        private readonly IMailService _mailServices;
         private readonly IAddressRepository _addressRepository;
         private static HttpClient _client;
         private readonly string _secretKey;
         private readonly IPaymentDetails _paymentDetails;
 
 
-        public FarmerService(IConfiguration configuration, IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IAddressRepository addressRepository, IPaymentDetails paymentDetails)
+        public FarmerService(IConfiguration configuration, IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IAddressRepository addressRepository, IPaymentDetails paymentDetails,IMailService mailService)
         {
             _farmerRepository = farmerRepository;
             _userRepository = userRepository;
@@ -37,6 +40,7 @@ namespace FCMS.Implementations.Service
             _secretKey = configuration["Paystack:ApiKey"];
             _client = new HttpClient();
             _paymentDetails = paymentDetails;
+            _mailServices = mailService;
         }
 
         public async Task<BaseResponse<FarmerDto>> CreateAsync(CreateFarmerRequestModel model)
@@ -67,7 +71,15 @@ namespace FCMS.Implementations.Service
 
             var recipientCode = await CreateTransferRecipient(_secretKey, model.AccountName, model.AccountNumber, model.BankCode, "NGN");
 
-            
+            var mailRequest = new MailRequestDto
+            {
+                Subject = "Welcome",
+                ToEmail = newUser.Email,
+                ToName = newUser.FirstName,
+                HtmlContent = $"<html><body><h1>Hello {newUser.FirstName + "    " + newUser.LastName}, Welcome to FCMS International Limited.</h1><h4> <a href=https://www.canva.com/design/DAFz_ES31XE/EtoIii982LTYgm6K-VYZgg/edit?utm_content=DAFz_ES31XE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton></h4></body></html>"
+            };
+
+           
 
             newUser.ProfilePicture = farmerImage.Data.Name;
             newUser.Farmer = newFarmer;
@@ -91,6 +103,8 @@ namespace FCMS.Implementations.Service
             _userRepository.Insert<User>(newUser);
             _addressRepository.Insert<Address>(newAddress);
             _paymentDetails.Insert<PaymentDetails>(newPaymentDetails);
+            _mailServices.SendEmailAsync(mailRequest);
+
 
             await _unitOfWork.SaveChangesAsync();
 
