@@ -61,16 +61,26 @@ namespace FCMS.Implementations.Service
                 newUser.Address = newAddress;
                 newAddress.UserId = newUser.Id;
 
-                var mailRequest = new MailRequestDto
-                {
-                    Subject = "Welcome",
-                    ToEmail = customer.Email,
-                    ToName = customer.FirstName,
-                    HtmlContent = $"<html><body><h1>Hello {customer.FirstName + "    " + customer.LastName }, Welcome to FCMS International Limited.</h1><h4> <a href=https://www.canva.com/design/DAFz_ES31XE/EtoIii982LTYgm6K-VYZgg/edit?utm_content=DAFz_ES31XE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton></h4></body></html>"
+            var mailRequest = new MailRequestDto
+            {
+                Subject = "Welcome to FCMS Farmer to Customer Management System!",
+                ToEmail = newUser.Email,
+                ToName = newUser.FirstName,
+                HtmlContent = $@"
+                    <html>
+                        <body>
+                            <h2>Dear {newUser.FirstName},</h2>
+                            <p>Welcome to our Farmer to Customer Management System! Discover a world of fresh, locally-sourced produce and support local farmers like never before.</p>
+                            <p>With our platform, you can browse a variety of high-quality products, connect directly with farmers, and enjoy the convenience purchase anywhere anytime.</p>
+                            <p>We're excited to have you join our community of conscious consumers committed to sustainable agriculture and vibrant local economies.</p>
+                            <p>Happy shopping!</p>
+                            <p>Best regards,<br/>Management<br/>FCMS</p>
+                        </body>
+                    </html>"
+            };
 
-                };
 
-                _userRepository.Insert<User>(newUser);
+            _userRepository.Insert<User>(newUser);
                 _customerRepository.Insert<Customer>(newCustomer);
                 _addressRepository.Insert<Address>(newAddress);
                  _mailServices.SendEmailAsync(mailRequest);

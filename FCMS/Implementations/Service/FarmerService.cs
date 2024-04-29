@@ -73,13 +73,22 @@ namespace FCMS.Implementations.Service
 
             var mailRequest = new MailRequestDto
             {
-                Subject = "Welcome",
+                Subject = "Welcome to FCMS Farmer to Customer Management System!",
                 ToEmail = newUser.Email,
                 ToName = newUser.FirstName,
-                HtmlContent = $"<html><body><h1>Hello {newUser.FirstName + "    " + newUser.LastName}, Welcome to FCMS International Limited.</h1><h4> <a href=https://www.canva.com/design/DAFz_ES31XE/EtoIii982LTYgm6K-VYZgg/edit?utm_content=DAFz_ES31XE&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton></h4></body></html>"
+                HtmlContent = $@"
+                        <html>
+                            <body>
+                                <h2>Dear {newUser.FirstName},</h2>
+                                <p>Welcome to our Farmer to Customer Management System! Get ready for streamlined farm management, easy sales, real-time insights and happy customers. We're here to support you every step of the way.</p>
+                                <p>Happy farming!</p>
+                                <p>Best regards,<br/>Management<br/>FCMS</p>
+                            </body>
+                        </html>"
             };
 
-           
+
+
 
             newUser.ProfilePicture = farmerImage.Data.Name;
             newUser.Farmer = newFarmer;

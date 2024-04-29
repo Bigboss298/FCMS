@@ -105,7 +105,7 @@ builder.Services.AddScoped<IPaymentDetails, PaymentDetail>();
 
 #endregion
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("MyConnection")));
 
 
 
