@@ -52,10 +52,10 @@ namespace FCMS.Gateway.EmailService
             SendSmtpEmailReplyTo ReplyTo = new SendSmtpEmailReplyTo(ReplyToEmail, ReplyToName);
             string stringInBase64 = "aGVsbG8gdGhpcyBpcyB0ZXN0";
             string AttachmentUrl = null;
-            //string AttachmentName = mailRequest.AttachmentName ?? "Welcome.txt";
+            string AttachmentName = mailRequest.AttachmentName ?? "Welcome.txt";
             byte[] Content = System.Convert.FromBase64String(stringInBase64);
-            //SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content, AttachmentName);
-            SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content);
+            SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content, AttachmentName);
+            //SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content);
             List<SendSmtpEmailAttachment> Attachment = new List<SendSmtpEmailAttachment>
             {
                 AttachmentContent
