@@ -18,6 +18,8 @@ namespace FCMS.Gateway.EmailService
         }
         public void SendEmailAsync(MailRequestDto mailRequest)
         {
+
+
             Configuration.Default.ApiKey.Clear();
             if (!Configuration.Default.ApiKey.ContainsKey("api-key"))
             {
@@ -50,16 +52,6 @@ namespace FCMS.Gateway.EmailService
             string ReplyToName = "FCMS";
             string ReplyToEmail = "abdullahbisiriyu988@gmail.com";
             SendSmtpEmailReplyTo ReplyTo = new SendSmtpEmailReplyTo(ReplyToEmail, ReplyToName);
-            string stringInBase64 = "aGVsbG8gdGhpcyBpcyB0ZXN0";
-            string AttachmentUrl = null;
-            string AttachmentName = mailRequest.AttachmentName ?? "Welcome.txt";
-            byte[] Content = System.Convert.FromBase64String(stringInBase64);
-            SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content, AttachmentName);
-            //SendSmtpEmailAttachment AttachmentContent = new SendSmtpEmailAttachment(AttachmentUrl, Content);
-            List<SendSmtpEmailAttachment> Attachment = new List<SendSmtpEmailAttachment>
-            {
-                AttachmentContent
-            };
             JObject Headers = new JObject
             {
                 { "Some-Custom-Name", "unique-id-1234" }
@@ -91,7 +83,7 @@ namespace FCMS.Gateway.EmailService
             };
             try
             {
-                var sendSmtpEmail = new SendSmtpEmail(Email, To, Bcc, Cc, mailRequest.HtmlContent, TextContent, mailRequest.Subject, ReplyTo, Attachment, Headers, TemplateId, Params, messageVersiopns, Tags);
+                var sendSmtpEmail = new SendSmtpEmail(Email, To, Bcc, Cc, mailRequest.HtmlContent, TextContent, mailRequest.Subject, ReplyTo, null, Headers, TemplateId, Params, messageVersiopns, Tags);
                 CreateSmtpEmail result = apiInstance.SendTransacEmail(sendSmtpEmail);
                 Debug.WriteLine(result.ToJson());
             }
@@ -99,6 +91,7 @@ namespace FCMS.Gateway.EmailService
             {
                 Debug.WriteLine(e.Message);
             }
+             
         }
     }
 }
