@@ -39,7 +39,7 @@ namespace FCMS.Controllers
 
         //[Authorize]
         [HttpPost("Delete")]
-        public async Task<IActionResult> Delete([FromRoute] string id)
+        public async Task<IActionResult> Delete(string id)
         {
             try
             {

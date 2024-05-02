@@ -15,6 +15,7 @@ namespace FCMS.Implementations.Repository
         public async Task<Product> Get(Expression<Func<Product, bool>> expression)
         {
             return await _context.Products
+                .Include(i => i.ProductImages)
                 .Include(f => f.Farmer)
                 .ThenInclude(u => u.User)
                 .ThenInclude(a => a.Address)

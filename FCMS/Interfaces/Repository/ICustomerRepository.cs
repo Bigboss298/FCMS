@@ -7,5 +7,6 @@ namespace FCMS.Interfaces.Repository
     {
         Task<IReadOnlyList<Customer>> GetAll();
         Task<Customer> Get(Expression<Func<Customer, bool>> expression);
+
     }
 }

@@ -17,13 +17,15 @@ namespace FCMS.Implementations.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFileManager _fileManager;
         private readonly IMapper _mapper;
+        private readonly IProductImageRepository _productImagesRepository;
 
-        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper)
+        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper, IProductImageRepository productImagesRepository)
         {
             _productRepository = productRepository;
             _unitOfWork = unitOfWork;
             _fileManager = fileManager;
             _mapper = mapper;
+            _productImagesRepository = productImagesRepository;
         }
         public async Task<BaseResponse<ProductDto>> CreateAsync(CreateProductRequestModel model)
         {
@@ -52,9 +54,9 @@ namespace FCMS.Implementations.Service
                     ImageReference = item.Name,
                     ProductId = newProduct.Id,
                 };
-                _productRepository.Insert<ProductImages>(productImage);
+                _productImagesRepository.Insert<ProductImages>(productImage);
             }
-            _productRepository.Insert(newProduct);
+            _productRepository.Insert<Product>(newProduct);
             await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<ProductDto>
@@ -76,43 +78,59 @@ namespace FCMS.Implementations.Service
             return true;
         }
 
-        public IReadOnlyList<ProductDto> GetAsync(string param)
+        public async Task<IReadOnlyList<ProductDto>> GetAsync(string param)
+        
         {
-            var product = _productRepository.QueryWhere<Product>(x => x.FarmerId == param || x.Name == param || x.Id == param || x.Farmer.User.Address.State == param || x.Farmer.User.Address.City == param);
-            if(!product.Any())
+            var products = _productRepository.QueryWhere<Product>(x => x.FarmerId == param || x.Name == param || x.Id == param || x.Farmer.User.Address.State == param || x.Farmer.User.Address.City == param);
+            if(!products.Any())
             {
                 throw new NotFoundException("Product not Found!!!");
             }
-            return product.Select(x => new ProductDto
+
+            var listOfProducts = new List<ProductDto>();
+            foreach (var product in products)
             {
-                Name = x.Name,
-                Description = x.Description,
-                Quantity = x.Quantity,
-                Price = x.Price,
-                FarmerId = x.FarmerId,
-                Farmer = new Farmer
+                var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
+
+
+                var productToAdd = new ProductDto
                 {
-                    UserId = x.Farmer.UserId,
-                    UserEmail = x.Farmer.UserEmail,
-                    User = new User
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Quantity = product.Quantity,
+                    Price = product.Price,
+                    ImageUrls = productImage.Select(i => i.ImageReference).ToList(),
+                    FarmerId = product.FarmerId,
+                    Farmer = new Farmer
                     {
-                        FirstName = x.Farmer.User.FirstName,
-                        LastName = x.Farmer.User.LastName,
-                        Email = x.Farmer.User.Email,
-                        PhoneNumber = x.Farmer.User.PhoneNumber,
-                        ProfilePicture = x.Farmer.User.ProfilePicture,
-                        Gender = x.Farmer.User.Gender,
-                        Role = x.Farmer.User.Role,
-                        Address = new Address
+                        UserEmail = product.Farmer.UserEmail,
+                        UserId = product.Farmer.UserId,
+                        User = new User
                         {
-                            Country = x.Farmer.User.Address.Country,
-                            State = x.Farmer.User.Address.State,
-                            City = x.Farmer.User.Address.City,
-                            Language = x.Farmer.User.Address.Language,
-                        },
+                            FirstName = product.Farmer.User.FirstName,
+                            LastName = product.Farmer.User.LastName,
+                            Email = product.Farmer.User.Email,
+                            PhoneNumber = product.Farmer.User.PhoneNumber,
+                            ProfilePicture = product.Farmer.User.ProfilePicture,
+                            Gender = product.Farmer.User.Gender,
+                            Role = product.Farmer.User.Role,
+                            Address = new Address
+                            {
+                                Country = product.Farmer.User.Address.Country,
+                                State = product.Farmer.User.Address.State,
+                                City = product.Farmer.User.Address.City,
+                                Language = product.Farmer.User.Address.Language,
+                            },
+                        }
                     }
-                },
-            }).ToList();
+                };
+
+                listOfProducts.Add(productToAdd);
+
+            }
+
+            return listOfProducts;
         }
 
         public async Task<BaseResponse<ProductDto>> GetByIdAsync(string productId)
@@ -122,17 +140,19 @@ namespace FCMS.Implementations.Service
             {
                 throw new NotFoundException("No such product!!!");
             }
+            var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
             return new BaseResponse<ProductDto>
             {
                 Message = "Product found!!!",
                 Status = true,
                 Data = new ProductDto
                 {
-                    
+                    Id = product.Id,
                     Name = product.Name,
                     Description = product.Description,
                     Quantity = product.Quantity,
                     Price = product.Price,
+                    ImageUrls = productImage.Select(i => i.ImageReference).ToList(),
                     FarmerId = product.FarmerId,
                     Farmer = new Farmer
                     {
@@ -160,44 +180,60 @@ namespace FCMS.Implementations.Service
             };
         }
 
-        public async Task<IReadOnlyList<ProductDto>> GetProductsAsync()
-        {
-            var products = await _productRepository.GetAll();
-            if(!products.Any())
+            public async Task<IReadOnlyList<ProductDto>> GetProductsAsync()
             {
-                return new List<ProductDto>();
-            }
+                var products = await _productRepository.GetAll();
+                if(!products.Any())
+                {
+                    return new List<ProductDto>();
+                }
 
-            return products.Select(x => new ProductDto
-            {
-               Name = x.Name,
-               Description = x.Description,
-               Quantity = x.Quantity,
-               Price = x.Price,
-               Farmer = new Farmer
-               {
-                   UserId = x.Farmer.UserId,
-                   UserEmail = x.Farmer.UserEmail,
-                   User = new User
-                   {
-                       FirstName = x.Farmer.User.FirstName,
-                       LastName = x.Farmer.User.LastName,
-                       Email = x.Farmer.User.Email,
-                       PhoneNumber = x.Farmer.User.PhoneNumber,
-                       ProfilePicture = x.Farmer.User.ProfilePicture,
-                       Gender = x.Farmer.User.Gender,
-                       Role = x.Farmer.User.Role,
-                       Address = new Address
-                       {
-                           Country = x.Farmer.User.Address.Country,
-                           State = x.Farmer.User.Address.State,
-                           City = x.Farmer.User.Address.City,
-                           Language = x.Farmer.User.Address.Language,
-                       },
-                   }
-               },
-            }).ToList();
-        }
+                var listOfProducts = new List<ProductDto>();
+                foreach (var product in products)
+                {
+                    var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
+
+
+                    var productToAdd = new ProductDto
+                    {
+                        Id = product.Id,
+                        Name = product.Name,
+                        Description = product.Description,
+                        Quantity = product.Quantity,
+                        Price = product.Price,
+                        ImageUrls = productImage.Select(i => i.ImageReference).ToList(),
+                        FarmerId = product.FarmerId,
+                        Farmer = new Farmer
+                        {
+                            UserEmail = product.Farmer.UserEmail,
+                            UserId = product.Farmer.UserId,
+                            User = new User
+                            {
+                                FirstName = product.Farmer.User.FirstName,
+                                LastName = product.Farmer.User.LastName,
+                                Email = product.Farmer.User.Email,
+                                PhoneNumber = product.Farmer.User.PhoneNumber,
+                                ProfilePicture = product.Farmer.User.ProfilePicture,
+                                Gender = product.Farmer.User.Gender,
+                                Role = product.Farmer.User.Role,
+                                Address = new Address
+                                {
+                                    Country = product.Farmer.User.Address.Country,
+                                    State = product.Farmer.User.Address.State,
+                                    City = product.Farmer.User.Address.City,
+                                    Language = product.Farmer.User.Address.Language,
+                                },
+                            }
+                        }
+                    };
+
+                    listOfProducts.Add(productToAdd);
+
+                }
+
+            return listOfProducts;
+               
+            }
 
         public async Task<BaseResponse<ProductDto>> UpdateAsync(UpdateProductRequestModel model, string id)
         {
@@ -221,3 +257,41 @@ namespace FCMS.Implementations.Service
         }
     }
 }
+
+
+
+
+//products.Select(x => new ProductDto
+//{
+//    Id = x.Id,
+//    Name = x.Name,
+//    Description = x.Description,
+//    Quantity = x.Quantity,
+//    Price = x.Price,
+//    ImageUrls = (ICollection<string>)productImages.Where(y => y.ProductId == x.Id).Select(z => new ProductImages
+//    {
+//        ImageReference = z.ImageReference,
+//    }).ToList(),
+//    Farmer = new Farmer
+//    {
+//        UserId = x.Farmer.UserId,
+//        UserEmail = x.Farmer.UserEmail,
+//        User = new User
+//        {
+//            FirstName = x.Farmer.User.FirstName,
+//            LastName = x.Farmer.User.LastName,
+//            Email = x.Farmer.User.Email,
+//            PhoneNumber = x.Farmer.User.PhoneNumber,
+//            ProfilePicture = x.Farmer.User.ProfilePicture,
+//            Gender = x.Farmer.User.Gender,
+//            Role = x.Farmer.User.Role,
+//            Address = new Address
+//            {
+//                Country = x.Farmer.User.Address.Country,
+//                State = x.Farmer.User.Address.State,
+//                City = x.Farmer.User.Address.City,
+//                Language = x.Farmer.User.Address.Language,
+//            },
+//        }
+//    },
+//}).ToList()

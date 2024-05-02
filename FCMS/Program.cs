@@ -26,7 +26,8 @@ builder.Services.AddCors(c => c
                 .AddPolicy("FCMS", builder => builder
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowAnyOrigin()));
+                .WithOrigins("http://localhost:3000")));
+
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -79,6 +80,7 @@ builder.Services.AddScoped<IMailService, MailService>();
 
 builder.Services.AddScoped<IFileManager, FileManager>();
 
+builder.Services.AddScoped<IProductImageRepository, ProductImageRepository>();
 
 builder.Services.AddScoped<IFileManager, FileManager>();
 builder.Services.AddScoped<IMapper, Mapper>();
@@ -139,54 +141,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     };
 });
 #endregion
-
-
-
-
-//builder.Services.AddSwaggerGen(option =>
-//{
-//    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-//{
-//    In = ParameterLocation.Header,
-//    Description = "Please enter a valid token",
-//    Name = "Authorization",
-//    Type = SecuritySchemeType.Http,
-//    BearerFormat = "JWT",
-//    Scheme = "Bearer"
-//});
-//option.AddSecurityRequirement(new OpenApiSecurityRequirement
-//                 {
-//                     {
-//                         new OpenApiSecurityScheme
-//                         {
-//                             Reference = new OpenApiReference
-//                             {
-//                                 Type=ReferenceType.SecurityScheme,
-//                                 Id="Bearer"
-//                             }
-//                         },
-//                         new string[]{}
-//                     }
-//                 });
-//});
-
-//builder.Services.AddAuthentication(auth =>
-//{
-//    auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(options =>
-//{
-//    options.TokenValidationParameters = new TokenValidationParameters
-//    {
-//        ValidateIssuer = true,
-//        ValidateAudience = true,
-//        ValidateLifetime = true,
-//        ValidateIssuerSigningKey = true,
-//        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//        ValidAudience = builder.Configuration["Jwt:Issuer"],
-//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-//    };
-//});
 
 
 

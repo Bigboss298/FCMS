@@ -7,7 +7,7 @@ namespace FCMS.Interfaces.Service
     public interface IProductService
     {
         Task<BaseResponse<ProductDto>> GetByIdAsync(string productId);
-        IReadOnlyList<ProductDto> GetAsync(string param);
+        Task<IReadOnlyList<ProductDto>> GetAsync(string param);
         Task<IReadOnlyList<ProductDto>> GetProductsAsync();
         Task<BaseResponse<ProductDto>> CreateAsync(CreateProductRequestModel model);
         Task<BaseResponse<ProductDto>> UpdateAsync(UpdateProductRequestModel model, string id);

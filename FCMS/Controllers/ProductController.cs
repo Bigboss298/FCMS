@@ -27,11 +27,11 @@ namespace FCMS.Controllers
 
         //[Authorize]
         [HttpGet("GetByAny")]
-        public IActionResult GetByAnyAsync(string param)
+        public async Task<IActionResult> GetByAnyAsync(string param)
         {
             try
             {
-                var products = _productService.GetAsync(param);
+                var products = await _productService.GetAsync(param);
                 return Ok(products);
             }
             catch (NotFoundException ex)
