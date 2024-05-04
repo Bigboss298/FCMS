@@ -140,7 +140,7 @@ namespace FCMS.Implementations.Service
 
         public async Task<BaseResponse<FarmerDto>> GetAsync(string id)
         {
-            var farmer = await _farmerRepository.Get(x => x.Id == id);
+            var farmer = await _farmerRepository.Get(x => x.Id == id  || x.UserId == id);
             if(farmer  is null)
             {
                 throw new NotFoundException("Farmer not Found!!!");

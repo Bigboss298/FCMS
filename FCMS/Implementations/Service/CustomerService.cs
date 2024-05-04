@@ -110,7 +110,7 @@ namespace FCMS.Implementations.Service
 
         public async Task<BaseResponse<CustomerDto>> GetAsync(string customerId)
         {
-            var customer = await _customerRepository.Get(x => x.Id == customerId);
+            var customer = await _customerRepository.Get(x => x.Id == customerId | x.UserId == customerId);
             if(customer is null)
             {
                 throw new NotFoundException($"Customer with the Id {customerId} not found");

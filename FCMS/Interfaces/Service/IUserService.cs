@@ -10,7 +10,6 @@ namespace FCMS.Interfaces.Service
         Task<BaseResponse<UserDto>> GetByMail(string Email);
         Task<BaseResponse<UserDto>> UpdateUser(UpdateUserRequestModel model);
         Task<BaseResponse<UserDto>> LoginAsync(UserLoginRequestModel model);
-        Task<BaseResponse<UserDto>> Logout();
         Task<bool> DeleteAsync(string id);
     }
 }

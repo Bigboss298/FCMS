@@ -58,7 +58,7 @@ namespace FCMS.Controllers
 
         //[Authorize]
         [HttpPost("Update")]
-        public async Task<IActionResult> UpdateUser(UpdateUserRequestModel model)
+        public async Task<IActionResult> UpdateUser([FromForm] UpdateUserRequestModel model)
         {
            if(ModelState.IsValid)
             {

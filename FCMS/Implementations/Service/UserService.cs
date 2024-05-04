@@ -95,23 +95,43 @@ namespace FCMS.Implementations.Service
             };
         }
 
-        public Task<BaseResponse<UserDto>> Logout()
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<BaseResponse<UserDto>> UpdateUser(UpdateUserRequestModel model)
         {
             var userToUpdate = await _userRepository.Get<User>(x => x.Id == model.id);
-            if(userToUpdate is null) throw new Exception("User not Found");
+            if (userToUpdate is null) throw new Exception("User not Found");
+
+            // Iterate through the properties of the model
+            foreach (var property in typeof(UpdateUserRequestModel).GetProperties())
+            {
+                // Ignore the Id property
+                if (property.Name == "id")
+                    continue;
+
+                // Get the value of the property from the model
+                var value = property.GetValue(model);
+
+                // If the value is null, replace it with the corresponding value from userToUpdate
+                if (value == null)
+                {
+                    var userValue = typeof(User).GetProperty(property.Name)?.GetValue(userToUpdate);
+                    if (userValue != null)
+                    {
+                        property.SetValue(model, userValue);
+                    }
+                }
+            }
+
+            // Update the user entity
             _userRepository.Update<User>(userToUpdate.Adapt<User>());
             await _unitOfWork.SaveChangesAsync();
+
             return new BaseResponse<UserDto>
             {
-                Message = $"User {userToUpdate.FirstName} updated succesfully",
+                Message = $"User {userToUpdate.FirstName} updated successfully",
                 Status = true,
                 Data = userToUpdate.Adapt<UserDto>(),
             };
         }
+
     }
 }
