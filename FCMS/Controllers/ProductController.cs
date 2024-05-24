@@ -31,7 +31,7 @@ namespace FCMS.Controllers
         {
             try
             {
-                var products = await _productService.GetAsync(param);
+                var products = await _productService.GetProductsByAny(param);
                 return Ok(products);
             }
             catch (NotFoundException ex)
@@ -47,7 +47,7 @@ namespace FCMS.Controllers
         //[Authorize]
         [HttpGet("GetById")]
         public async Task<IActionResult> GetByIdAsync(string id)
-        {
+         {
             try
             {
                 var product = await _productService.GetByIdAsync(id);

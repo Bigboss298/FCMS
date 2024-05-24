@@ -18,14 +18,18 @@ namespace FCMS.Implementations.Service
         private readonly IFileManager _fileManager;
         private readonly IMapper _mapper;
         private readonly IProductImageRepository _productImagesRepository;
+        private readonly IWebHostEnvironment _hostingEnvironment;
+        private readonly IProductImageRepository _productImageRepository;
 
-        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper, IProductImageRepository productImagesRepository)
+        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper, IProductImageRepository productImagesRepository, IWebHostEnvironment hostingEnvironment, IProductImageRepository productImageRepository)
         {
             _productRepository = productRepository;
             _unitOfWork = unitOfWork;
             _fileManager = fileManager;
             _mapper = mapper;
             _productImagesRepository = productImagesRepository;
+            _hostingEnvironment = hostingEnvironment;
+            _productImageRepository = productImageRepository;
         }
         public async Task<BaseResponse<ProductDto>> CreateAsync(CreateProductRequestModel model)
         {
@@ -68,12 +72,23 @@ namespace FCMS.Implementations.Service
 
         public async Task<bool> DeleteAsync(string productId)
         {
-            var imageToDelete = await _productRepository.Get<Product>(x => x.Id == productId);
-            if(imageToDelete is null)
+            var produtToDelete = await _productRepository.Get<Product>(x => x.Id == productId);
+            var imageToDelete = await _productImageRepository.Get(x => x.ProductId == productId);
+            foreach (var item in imageToDelete)
+            {
+                var previousPicturePath = Path.Combine(_hostingEnvironment.WebRootPath, "Documents", item.ImageReference);
+                if (File.Exists(previousPicturePath))
+                {
+                    File.Delete(previousPicturePath);
+                    _productImageRepository.Delete<ProductImages>(item);
+                }
+            }
+            if (produtToDelete is null)
             {
                 return false;
             }
-            _productRepository.Delete<Product>(imageToDelete);
+           
+            _productRepository.Delete<Product>(produtToDelete);
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
@@ -81,7 +96,7 @@ namespace FCMS.Implementations.Service
         public async Task<IReadOnlyList<ProductDto>> GetAsync(string param)
         
         {
-            var products = _productRepository.QueryWhere<Product>(x => x.FarmerId == param || x.Name == param || x.Id == param || x.Farmer.User.Address.State == param || x.Farmer.User.Address.City == param);
+            var products = _productRepository.QueryWhere<Product>(x => x.FarmerId == param || x.Name == param || x.Id == param || x.Farmer.User.Address.State == param || x.Farmer.User.Address.City == param || x.Farmer.User.FirstName == param);
             if(!products.Any())
             {
                 throw new NotFoundException("Product not Found!!!");
@@ -235,6 +250,57 @@ namespace FCMS.Implementations.Service
                
             }
 
+        public async Task<IEnumerable<ProductDto>> GetProductsByAny(string param)
+        {
+            var products = await _productRepository.GetByAny(x => x.Name == param || x.Farmer.User.FirstName == param || x.FarmerId == param);
+            if (!products.Any())
+            {
+                throw new NotFoundException("Product not Found!!!");
+            }
+            var listOfProducts = new List<ProductDto>();
+            foreach (var product in products)
+            {
+                var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
+
+
+                var productToAdd = new ProductDto
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Quantity = product.Quantity,
+                    Price = product.Price,
+                    ImageUrls = productImage.Select(i => i.ImageReference).ToList(),
+                    FarmerId = product.FarmerId,
+                    Farmer = new Farmer
+                    {
+                        UserEmail = product.Farmer.UserEmail,
+                        UserId = product.Farmer.UserId,
+                        User = new User
+                        {
+                            FirstName = product.Farmer.User.FirstName,
+                            LastName = product.Farmer.User.LastName,
+                            Email = product.Farmer.User.Email,
+                            PhoneNumber = product.Farmer.User.PhoneNumber,
+                            ProfilePicture = product.Farmer.User.ProfilePicture,
+                            Gender = product.Farmer.User.Gender,
+                            Role = product.Farmer.User.Role,
+                            Address = new Address
+                            {
+                                Country = product.Farmer.User.Address.Country,
+                                State = product.Farmer.User.Address.State,
+                                City = product.Farmer.User.Address.City,
+                                Language = product.Farmer.User.Address.Language,
+                            },
+                        }
+                    }
+                };
+
+                listOfProducts.Add(productToAdd);
+            }
+            return listOfProducts;
+        }
+
         public async Task<BaseResponse<ProductDto>> UpdateAsync(UpdateProductRequestModel model, string id)
         {
             var productToUpdate = await _productRepository.Get<Product>(x => x.Id == id);
@@ -259,39 +325,3 @@ namespace FCMS.Implementations.Service
 }
 
 
-
-
-//products.Select(x => new ProductDto
-//{
-//    Id = x.Id,
-//    Name = x.Name,
-//    Description = x.Description,
-//    Quantity = x.Quantity,
-//    Price = x.Price,
-//    ImageUrls = (ICollection<string>)productImages.Where(y => y.ProductId == x.Id).Select(z => new ProductImages
-//    {
-//        ImageReference = z.ImageReference,
-//    }).ToList(),
-//    Farmer = new Farmer
-//    {
-//        UserId = x.Farmer.UserId,
-//        UserEmail = x.Farmer.UserEmail,
-//        User = new User
-//        {
-//            FirstName = x.Farmer.User.FirstName,
-//            LastName = x.Farmer.User.LastName,
-//            Email = x.Farmer.User.Email,
-//            PhoneNumber = x.Farmer.User.PhoneNumber,
-//            ProfilePicture = x.Farmer.User.ProfilePicture,
-//            Gender = x.Farmer.User.Gender,
-//            Role = x.Farmer.User.Role,
-//            Address = new Address
-//            {
-//                Country = x.Farmer.User.Address.Country,
-//                State = x.Farmer.User.Address.State,
-//                City = x.Farmer.User.Address.City,
-//                Language = x.Farmer.User.Address.Language,
-//            },
-//        }
-//    },
-//}).ToList()

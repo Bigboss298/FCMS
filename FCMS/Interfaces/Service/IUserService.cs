@@ -11,5 +11,7 @@ namespace FCMS.Interfaces.Service
         Task<BaseResponse<UserDto>> UpdateUser(UpdateUserRequestModel model);
         Task<BaseResponse<UserDto>> LoginAsync(UserLoginRequestModel model);
         Task<bool> DeleteAsync(string id);
+        Task<BaseResponse<UserDto>> UpdateDp(UpDateDPRequestModel model);
+        Task<BaseResponse<UserDto>> UpdatePassword(UpdatePasswordRequestModel model);
     }
 }

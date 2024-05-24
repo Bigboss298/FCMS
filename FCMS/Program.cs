@@ -27,6 +27,8 @@ builder.Services.AddCors(c => c
                 .AddPolicy("FCMS", builder => builder
                 .AllowAnyHeader()
                 .AllowAnyMethod()
+                .AllowAnyOrigin()
+                .WithOrigins("https://fcms-web-app.vercel.app")
                 .WithOrigins("http://localhost:3000")));
 
 
@@ -94,6 +96,9 @@ builder.Services.AddScoped<IPaystackService, PaystackService>();
 
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRepository, ChatRepository>();
+
+builder.Services.AddScoped<IOrderService, OrderServices>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IReviewService, ReviewService>();

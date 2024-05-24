@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240407161258_initial 1")]
-    partial class initial1
+    [Migration("20240522183648_new updates")]
+    partial class newupdates
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -183,6 +183,10 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("PaymentId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -191,6 +195,9 @@ namespace FCMS.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -224,22 +231,23 @@ namespace FCMS.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("Method")
-                        .HasColumnType("int");
+                    b.Property<string>("Method")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ProductId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ReferenceNumber")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("TransactionId")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -457,13 +465,14 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "4/7/2024",
+                            DateCreated = "5/22/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,
                             LastName = "Doe",
                             Password = "JohnDoe",
                             PhoneNumber = "08155850462",
+                            ProfilePicture = "my_passport.jpg",
                             Role = 1
                         });
                 });
@@ -582,7 +591,7 @@ namespace FCMS.Migrations
             modelBuilder.Entity("FCMS.Model.Entities.ProductOrder", b =>
                 {
                     b.HasOne("FCMS.Model.Entities.Order", "Order")
-                        .WithMany("ProductOrder")
+                        .WithMany()
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -621,11 +630,6 @@ namespace FCMS.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("Reviews");
-                });
-
-            modelBuilder.Entity("FCMS.Model.Entities.Order", b =>
-                {
-                    b.Navigation("ProductOrder");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Product", b =>

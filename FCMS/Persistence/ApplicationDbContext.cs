@@ -36,6 +36,7 @@ namespace FCMS.Persistence
                         Email = "john@gmail.com",
                         Password = "JohnDoe",
                         PhoneNumber = "08155850462",
+                        ProfilePicture = "my_passport.jpg",
                         Gender = (Gender)1,
                         Role = (Role)1,
 

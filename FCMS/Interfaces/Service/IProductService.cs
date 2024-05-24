@@ -9,6 +9,7 @@ namespace FCMS.Interfaces.Service
         Task<BaseResponse<ProductDto>> GetByIdAsync(string productId);
         Task<IReadOnlyList<ProductDto>> GetAsync(string param);
         Task<IReadOnlyList<ProductDto>> GetProductsAsync();
+        Task<IEnumerable<ProductDto>> GetProductsByAny(string param);
         Task<BaseResponse<ProductDto>> CreateAsync(CreateProductRequestModel model);
         Task<BaseResponse<ProductDto>> UpdateAsync(UpdateProductRequestModel model, string id);
         Task<bool> DeleteAsync(string productId);

@@ -27,8 +27,6 @@ namespace FCMS.Implementations.Repository
         public async Task<IReadOnlyList<T>> GetAll<T>() where T : BaseEntity
         {
             return await _context.Set<T>()
-                //.Include(c => c.Equals(typeof(T)))
-                //.ThenInclude(a => a.Equals(typeof(T)))
                 .ToListAsync();
         }
 

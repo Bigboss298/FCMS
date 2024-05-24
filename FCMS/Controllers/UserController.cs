@@ -21,6 +21,7 @@ namespace FCMS.Controllers
         }
         [HttpPost("SignIn")]
         public async Task<IActionResult> Login([FromForm] UserLoginRequestModel model)
+        
         {
             if(ModelState.IsValid)
             {
@@ -65,7 +66,7 @@ namespace FCMS.Controllers
                 try
                 {
                     var userToUpdate = await _userService.UpdateUser(model);
-                    return Ok(userToUpdate.Data);
+                    return Ok(userToUpdate);
                 }
                 catch (Exception ex)
                 {
@@ -81,6 +82,34 @@ namespace FCMS.Controllers
         {
             var users = await _userService.GetUsers();
             return Ok(users);
+        }
+
+        [HttpPost("UpdatePassword")]
+        public async Task<IActionResult> UpdatePassword([FromForm] UpdatePasswordRequestModel model)
+        {
+            try
+            {
+                var userToUpdate = await _userService.UpdatePassword(model);
+                return Ok(userToUpdate);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("UpdateDp")]
+        public async Task<IActionResult> UpdateDP([FromForm] UpDateDPRequestModel model)
+        {
+            try
+            {
+                var userToUpdate = await _userService.UpdateDp(model);
+                return Ok(userToUpdate);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

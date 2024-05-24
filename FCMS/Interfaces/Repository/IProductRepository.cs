@@ -9,5 +9,6 @@ namespace FCMS.Interfaces.Repository
     {
         Task<IReadOnlyList<Product>> GetAll();
         Task<Product> Get(Expression<Func<Product, bool>> expression);
+        Task<IEnumerable<Product>> GetByAny(Expression<Func<Product, bool>> expression);
     }
 }

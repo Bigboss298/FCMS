@@ -3,6 +3,7 @@ using System;
 using FCMS.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240511070814_initial2")]
+    partial class initial2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,10 +183,6 @@ namespace FCMS.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("PaymentId")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -192,9 +191,6 @@ namespace FCMS.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -228,23 +224,22 @@ namespace FCMS.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Method")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OrderId")
-                        .HasColumnType("longtext");
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
 
                     b.Property<string>("ProductId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ReferenceNumber")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("TransactionId")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
@@ -462,7 +457,7 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "5/22/2024",
+                            DateCreated = "5/11/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,
@@ -588,7 +583,7 @@ namespace FCMS.Migrations
             modelBuilder.Entity("FCMS.Model.Entities.ProductOrder", b =>
                 {
                     b.HasOne("FCMS.Model.Entities.Order", "Order")
-                        .WithMany()
+                        .WithMany("ProductOrder")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -627,6 +622,11 @@ namespace FCMS.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("FCMS.Model.Entities.Order", b =>
+                {
+                    b.Navigation("ProductOrder");
                 });
 
             modelBuilder.Entity("FCMS.Model.Entities.Product", b =>
