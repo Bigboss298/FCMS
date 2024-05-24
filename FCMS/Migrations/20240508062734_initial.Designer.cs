@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FCMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240425122043_latest")]
-    partial class latest
+    [Migration("20240508062734_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -457,7 +457,7 @@ namespace FCMS.Migrations
                         new
                         {
                             Id = "ee4c458",
-                            DateCreated = "4/25/2024",
+                            DateCreated = "5/7/2024",
                             Email = "john@gmail.com",
                             FirstName = "John",
                             Gender = 1,

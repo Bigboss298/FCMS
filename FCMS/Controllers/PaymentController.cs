@@ -13,24 +13,18 @@ public class PaymentController : ControllerBase
     {
         _paystackService = paystackService;
     }
-    //[FromRoute] string customerId, [FromRoute] string productId
     [HttpPost("InitiatePayment")]
-    public async Task<IActionResult> MakePayMent([FromForm] CreatePaymentRequestModel model)
+    public async Task<IActionResult> RequestPayment([FromForm] RequestPaymentModel model)
     {
         try
         {
-            var transaction = await _paystackService.InitiatePayment(model);
+            var transaction = await _paystackService.Payment(model);
             return Ok(transaction);
-        }
-        catch (NotFoundException ex)
-        {
-            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-
     }
 
 
@@ -39,7 +33,7 @@ public class PaymentController : ControllerBase
     {
         try
         {
-            var transaction = _paystackService.GetTransactionRecieptAsync(transactionReference);
+            var transaction = await _paystackService.GetTransactionRecieptAsync(transactionReference);
             return new OkObjectResult(transaction);
         }
         catch (NotFoundException ex)

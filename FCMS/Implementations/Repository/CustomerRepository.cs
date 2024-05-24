@@ -23,7 +23,6 @@ namespace FCMS.Implementations.Repository
 
         public async Task<IReadOnlyList<Customer>> GetAll()
         {
-            //return (IReadOnlyList<Customer>)await _context.Customers.Include(x => x.User).ThenInclude(a => a.Address).ToListAsync();
             return (IReadOnlyList<Customer>)await _context.Customers
                 .Include(x => x.User)
                 .ThenInclude(a => a.Address)

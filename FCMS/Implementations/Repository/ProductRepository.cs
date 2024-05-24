@@ -30,5 +30,15 @@ namespace FCMS.Implementations.Repository
                 .ThenInclude(a => a.Address)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Product>> GetByAny(Expression<Func<Product, bool>> expression)
+        {
+            return (IEnumerable<Product>)await _context.Products
+               .Include(f => f.Farmer)
+               .ThenInclude(u => u.User)
+               .ThenInclude(a => a.Address)
+               .Where(expression)
+               .ToListAsync();
+        }
     }
 }

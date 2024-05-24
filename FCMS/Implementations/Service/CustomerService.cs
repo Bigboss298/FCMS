@@ -49,12 +49,12 @@ namespace FCMS.Implementations.Service
                     User = newUser,
                 };
 
-                var userImage = await _fileManager.UploadFileToSystem(customer.ProfilePicture);
+                    var userImage = await _fileManager.UploadFileToSystem(customer.ProfilePicture);
 
-                if (!userImage.Status)
-                {
-                    throw new Exception($"{userImage.Message}");
-                };
+                    if (!userImage.Status)
+                    {
+                        throw new Exception($"{userImage.Message}");
+                    };
 
                 newUser.ProfilePicture = userImage.Data.Name;
                 newUser.Customer = newCustomer;

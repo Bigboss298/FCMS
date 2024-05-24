@@ -63,5 +63,19 @@ namespace FCMS.Controllers
             var farmers = await _farmerService.GetFarmersAsync();
             return Ok(farmers);
         }
+
+        [HttpGet("Delete")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                var farmerToDelete = await _farmerService.DeleteAsync(id);
+                return Ok(farmerToDelete);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@
 {
     public enum PaymentMethod
     {
-        PayStack = 1,
-        BankTransfer
+        Card = 1,
+        BankTransfer,
     }
 }

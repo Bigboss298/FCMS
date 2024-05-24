@@ -22,13 +22,13 @@ namespace FCMS.Controllers
         [HttpPost("CreateChat/{id}/{recieverId}")]
         public async Task<IActionResult> CreateChat([FromBody] CreateChatRequestModel model, [FromRoute] string id, [FromRoute] string recieverId)
         {
-            string token = Request.Headers["Authorization"];
-            string extractedToken = token.Substring(7);
-            var isValid = JWTManager.IsTokenValid(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), extractedToken);
-            if (!isValid)
-            {
-                return Unauthorized();
-            }
+            //string token = Request.Headers["Authorization"];
+            //string extractedToken = token.Substring(7);
+            //var isValid = JWTManager.IsTokenValid(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), extractedToken);
+            //if (!isValid)
+            //{
+            //    return Unauthorized();
+            //}
             var chat = await _chatService.CreateChat(model, id, recieverId);
             if (!chat.Status)
             {

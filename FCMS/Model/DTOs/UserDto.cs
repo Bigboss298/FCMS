@@ -36,13 +36,8 @@ namespace FCMS.Model.DTOs
     public class UpdateUserRequestModel
     {
         public string id { get; set; } = default!;
-        public string FirstName { get; set; } = default!;
-        public string LastName { get; set; } = default!;
         public string Email { get; set; } = default!;
-        public string Password { get; set; } = default!;
         public string PhoneNumber { get; set; } = default!;
-        public IFormFile DisplayPicture { get; set; } = default!;
-        public Gender Gender { get; set; } = default!;
     }
 
     public class UserLoginRequestModel
@@ -66,5 +61,19 @@ namespace FCMS.Model.DTOs
         public string City { get; set; } = default!;
         public string State { get; set; } = default!;
         public string Language { get; set; } = default!;
+    }
+
+    public class UpdatePasswordRequestModel
+    {
+        public string Id { get; set; } = default!;
+        public string OldPassword { get; set; } = default!;
+        public string NewPassword { get; set; } = default!;
+        public string ConfirmNewPassword { get; set; } = default!;
+    }
+
+    public class UpDateDPRequestModel
+    {
+        public string Id { get; set; } = default!;
+        public IFormFile NewDp { get; set; } = default!;
     }
 }

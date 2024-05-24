@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FCMS.Migrations
 {
     /// <inheritdoc />
-    public partial class initial1 : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -332,7 +332,7 @@ namespace FCMS.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "DateCreated", "Email", "FirstName", "Gender", "LastName", "Password", "PhoneNumber", "ProfilePicture", "Role", "Token" },
-                values: new object[] { "ee4c458", "4/7/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1, null });
+                values: new object[] { "ee4c458", "5/7/2024", "john@gmail.com", "John", 1, "Doe", "JohnDoe", "08155850462", null, 1, null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",

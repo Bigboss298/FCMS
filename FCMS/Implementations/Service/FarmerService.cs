@@ -28,9 +28,10 @@ namespace FCMS.Implementations.Service
         private static HttpClient _client;
         private readonly string _secretKey;
         private readonly IPaymentDetails _paymentDetails;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
 
-        public FarmerService(IConfiguration configuration, IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IAddressRepository addressRepository, IPaymentDetails paymentDetails,IMailService mailService)
+        public FarmerService(IConfiguration configuration, IFarmerRepository farmerRepository, IUserRepository userRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IAddressRepository addressRepository, IPaymentDetails paymentDetails,IMailService mailService, IWebHostEnvironment hostingEnvironment)
         {
             _farmerRepository = farmerRepository;
             _userRepository = userRepository;
@@ -41,6 +42,7 @@ namespace FCMS.Implementations.Service
             _client = new HttpClient();
             _paymentDetails = paymentDetails;
             _mailServices = mailService;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         public async Task<BaseResponse<FarmerDto>> CreateAsync(CreateFarmerRequestModel model)
@@ -126,11 +128,19 @@ namespace FCMS.Implementations.Service
 
         public async Task<bool> DeleteAsync(string id)
         {
-            var farmerToDelete = await _farmerRepository.Get<Farmer>(x => x.Id == id);
-            var userToDelete = await _userRepository.Get<User>(x => x.Farmer.Id == id);
+            var farmerToDelete = await _farmerRepository.Get<Farmer>(x => x.UserId == id);
+            var userToDelete = await _userRepository.Get<User>(x => x.Id == id);
             if(farmerToDelete is null || userToDelete is null)
             {
                 throw new Exception("User doesnt exits!!!");
+            }
+            if (!string.IsNullOrEmpty(userToDelete.ProfilePicture))
+            {
+                var previousPicturePath = Path.Combine(_hostingEnvironment.WebRootPath, "Documents", userToDelete.ProfilePicture);
+                if (File.Exists(previousPicturePath))
+                {
+                    File.Delete(previousPicturePath);
+                }
             }
             _farmerRepository.Delete<Farmer>(farmerToDelete);
             _userRepository.Delete<User>(userToDelete);
@@ -234,42 +244,6 @@ namespace FCMS.Implementations.Service
 
         }
 
-
-        //private async Task<string> GetRecipientCode(PaymentDetailsDto model)
-        //{
-        //    var url = "https://api.paystack.co/transferrecipient";
-        //    var authorization = "Bearer " + _secretKey;
-        //    var contentType = "application/json";
-        //    var data = new
-        //    {
-        //        type = "nuban",
-        //        name = model.AccountName,
-        //        account_number = model.AccountNumber,
-        //        bank_code = model.BankCode,
-        //        currency = "NGN",
-        //    };
-
-        //    using (var httpClient = new HttpClient())
-        //    {
-        //        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Authorization", "Bearer sk_test_81ea41faa2918934deb1efb644a4b94217ebdf48");
-
-        //        var json = Newtonsoft.Json.JsonConvert.SerializeObject(data);
-        //        var content = new StringContent(json, Encoding.UTF8, contentType);
-
-        //        HttpResponseMessage response = await httpClient.PostAsync(url, content);
-
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            var resultJson = await response.Content.ReadAsStringAsync();
-        //            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<RecipientData>(resultJson);
-        //            return result.recipient_code;
-        //        }
-        //        else
-        //        {
-        //            throw new BadRequestException("Recipient Code could not be generated");
-        //        }
-        //    }
-        //}
         public static async Task<string> CreateTransferRecipient(string secretKey, string recipientName, string accountNumber, string bankCode, string currency)
         {
             string url = "https://api.paystack.co/transferrecipient";

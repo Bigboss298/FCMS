@@ -1,11 +1,14 @@
 ﻿
 
 using FCMS.Auth;
+using FCMS.FileManager;
 using FCMS.Interfaces.Repository;
 using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Entities;
 using Mapster;
+using Paystack.Net.SDK.Models;
+using ZstdSharp;
 
 namespace FCMS.Implementations.Service
 {
@@ -15,14 +18,18 @@ namespace FCMS.Implementations.Service
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJWTManager _tokenService;
         private readonly IConfiguration _config;
+        private readonly IFileManager _fileManager;
+        private readonly IWebHostEnvironment _hostingEnvironment;
         private string generateToken = null;
 
-        public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork, IJWTManager tokenService, IConfiguration config)
+        public UserService(IUserRepository userRepository, IUnitOfWork unitOfWork, IJWTManager tokenService, IConfiguration config, IFileManager fileManager, IWebHostEnvironment hostEnvironment)
         {
             _unitOfWork = unitOfWork;
             _userRepository = userRepository;
             _tokenService = tokenService;
             _config = config;
+            _fileManager = fileManager;
+            _hostingEnvironment = hostEnvironment;
         }
         public async Task<bool> DeleteAsync(string id)
         {
@@ -95,43 +102,81 @@ namespace FCMS.Implementations.Service
             };
         }
 
-        public async Task<BaseResponse<UserDto>> UpdateUser(UpdateUserRequestModel model)
+        public async Task<BaseResponse<UserDto>> UpdateDp(UpDateDPRequestModel model)
         {
-            var userToUpdate = await _userRepository.Get<User>(x => x.Id == model.id);
-            if (userToUpdate is null) throw new Exception("User not Found");
+            var getUser = await _userRepository.Get(x => x.Id == model.Id);
 
-            // Iterate through the properties of the model
-            foreach (var property in typeof(UpdateUserRequestModel).GetProperties())
+            if (getUser is null) throw new Exception("User not found");
+
+            if (!string.IsNullOrEmpty(getUser.ProfilePicture))
             {
-                // Ignore the Id property
-                if (property.Name == "id")
-                    continue;
-
-                // Get the value of the property from the model
-                var value = property.GetValue(model);
-
-                // If the value is null, replace it with the corresponding value from userToUpdate
-                if (value == null)
+                var previousPicturePath = Path.Combine(_hostingEnvironment.WebRootPath, "Documents", getUser.ProfilePicture);
+                if (File.Exists(previousPicturePath))
                 {
-                    var userValue = typeof(User).GetProperty(property.Name)?.GetValue(userToUpdate);
-                    if (userValue != null)
-                    {
-                        property.SetValue(model, userValue);
-                    }
+                    File.Delete(previousPicturePath);
                 }
             }
+            var userImage = await _fileManager.UploadFileToSystem(model.NewDp);
 
-            // Update the user entity
-            _userRepository.Update<User>(userToUpdate.Adapt<User>());
+            if (!userImage.Status)
+            {
+                throw new Exception($"{userImage.Message}");
+            };
+
+            getUser.ProfilePicture = userImage.Data.Name;
+
+            _userRepository.Update<User>(getUser);
             await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<UserDto>
             {
-                Message = $"User {userToUpdate.FirstName} updated successfully",
+                Message = "Profile picture updated sucessfully",
                 Status = true,
-                Data = userToUpdate.Adapt<UserDto>(),
+           }; 
+        }
+
+        public async Task<BaseResponse<UserDto>> UpdatePassword(UpdatePasswordRequestModel model)
+        {
+            var getUser = await _userRepository.Get(x => x.Id == model.Id);
+            if (getUser is null) throw new Exception("User not Found!!!");
+
+            if (getUser.Password != model.OldPassword) throw new Exception("Old password Not corret");
+
+            if (model.NewPassword != model.ConfirmNewPassword) throw new Exception("New password and Confirm new password doesn't match");
+
+            getUser.Password = model.NewPassword;
+            getUser.Id = model.Id;
+
+            _userRepository.Update<User>(getUser);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new BaseResponse<UserDto>
+            {
+                Message = "Password Updated Sucessfully",
+                Status = true,
             };
         }
+
+        public async Task<BaseResponse<UserDto>> UpdateUser(UpdateUserRequestModel model)
+        {
+           
+                var userToUpdate = await _userRepository.Get<User>(x => x.Id == model.id);
+                if (userToUpdate is null)   throw new Exception("User not Found");
+
+                userToUpdate.Email = model.Email;
+                userToUpdate.PhoneNumber = model.PhoneNumber;
+
+                _userRepository.Update<User>(userToUpdate);
+                await _unitOfWork.SaveChangesAsync();
+
+                return new BaseResponse<UserDto>
+                {
+                    Message = $"User {userToUpdate.FirstName} updated successfully",
+                    Status = true,
+                };
+            }
+
+       
 
     }
 }
