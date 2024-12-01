@@ -12,6 +12,7 @@ namespace FCMS.Model.DTOs
         public ICollection<string> ImageUrls { get; set; } = new HashSet<string>();
         public string FarmerId { get; set; } = default!;
         public Farmer Farmer { get; set; } = default!;
+        public IEnumerable<ReviewDto> FarmerReview { get; set; } = default!;
         public ICollection<Order> Orders { get; set; } = new HashSet<Order>();
     }
 

@@ -5,11 +5,14 @@
         public int Ratings { get; set; }
         public string? Comments { get; set; }
         public string? CustomerId { get; set; }
+        public string CustomerName { get; set; }
         public string? FarmerId { get; set; }
     }
 
     public class CreateReviewRequestModel
     {
+        public string FarmerId { get; set; }
+        public string CustomerId { get; set; }
         public int Ratings { get; set; }
         public string? Comments { get; set;}
     }

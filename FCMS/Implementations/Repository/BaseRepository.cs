@@ -2,8 +2,8 @@
 using FCMS.Model.Entities;
 using FCMS.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace FCMS.Implementations.Repository
 {
@@ -16,18 +16,19 @@ namespace FCMS.Implementations.Repository
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public void Delete<T>(T entity) where T : BaseEntity => _context.Set<T>().Remove(entity);
+        public void Delete<T>(T entity) where T : BaseEntity
+        {
+            _context.Set<T>().Remove(entity);
+        }
 
-
-        public async Task<T> Get<T>(Expression<Func<T, bool>> expression) where T : BaseEntity
+        public async Task<T?> Get<T>(Expression<Func<T, bool>> expression) where T : BaseEntity
         {
             return await _context.Set<T>().FirstOrDefaultAsync(expression);
         }
 
         public async Task<IReadOnlyList<T>> GetAll<T>() where T : BaseEntity
         {
-            return await _context.Set<T>()
-                .ToListAsync();
+            return await _context.Set<T>().ToListAsync();
         }
 
         public Task<IReadOnlyList<T>> GetAll<T>(string param) where T : BaseEntity
@@ -35,15 +36,19 @@ namespace FCMS.Implementations.Repository
             throw new NotImplementedException();
         }
 
-        public void Insert<T>(T entity) where T : BaseEntity => _context.Set<T>().Add(entity);
-       
+        public void Insert<T>(T entity) where T : BaseEntity
+        {
+            _context.Set<T>().Add(entity);
+        }
 
         public IQueryable<T> QueryWhere<T>(Expression<Func<T, bool>> expression) where T : BaseEntity
         {
             return _context.Set<T>().Where(expression);
         }
 
-        public void Update<T>(T entity) where T : BaseEntity => _context.Set<T>().Update(entity);
-      
+        public void Update<T>(T entity) where T : BaseEntity
+        {
+            _context.Set<T>().Update(entity);
+        }
     }
 }

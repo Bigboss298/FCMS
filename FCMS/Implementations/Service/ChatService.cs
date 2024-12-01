@@ -4,8 +4,10 @@ using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
 using FCMS.Model.Entities;
 using FCMS.Model.Enum;
+using FCMS.Model.Exceptions;
 using Mapster;
 using MySqlX.XDevAPI;
+using Paystack.Net.SDK.Models;
 
 namespace FCMS.Implementations.Service
 {
@@ -26,23 +28,18 @@ namespace FCMS.Implementations.Service
             _userRepository = userRepository;
 
         }
-        public async Task<BaseResponse<ChatDto>> CreateChat(CreateChatRequestModel model, string loggedinid, string clickedid)
+        public async Task<BaseResponse<ChatDto>> CreateChat(CreateChatRequestModel model)
         {
-            if (model is null || clickedid is null || loggedinid is null)
+            if (model is null)
             {
-                return new BaseResponse<ChatDto>
-                {
-                    Message = "Oops something went wrong",
-                    Status = false
-                };
+                throw new NotFoundException("Make sure you are not sending empty message and the message is to a valid user!!!");
             }
-            var user = await _customerRepository.Get(x => x.Id == loggedinid);
             var chat = new ChatDto
             {
                 Content = model.Content,
                 Timestamp = DateTime.Now,
-                SenderId = loggedinid,
-                ReceiverId = clickedid,
+                SenderId = model.Id,
+                ReceiverId = model.RecieverId,
                 Seen = false,
             };
             var newChat = chat.Adapt<Chat>();
@@ -61,17 +58,18 @@ namespace FCMS.Implementations.Service
             throw new NotImplementedException();
         }
 
-        public async Task<ChatLists> GetChatFromASenderAsync(string senderId, string recieverId)
+        public async Task<ChatLists> GetChatFromASenderAsync(string clickedUser, string loggedinUser)
         {  
-           if (senderId == null || recieverId == null)
+           if (clickedUser == null || loggedinUser == null)
             {
-                return new ChatLists
-                {
-                    Message = "Oops Something went wrong",
-                    Status = false
-                };
+                throw new NotFoundException("No user clieked");
             }
-            var chats = await _chatRepository.GetAllChatFromASender(senderId, recieverId);
+            var chats = await _chatRepository.GetAllChatFromASender(clickedUser, loggedinUser);
+
+            if(!chats.Any())
+            {
+                return new ChatLists();
+            }
 
             var chatDtos = chats.Select(x => new ChatDto
             {
@@ -83,8 +81,6 @@ namespace FCMS.Implementations.Service
             }).ToList();
             return new ChatLists
             {
-                Message = "Chats restored successfully",
-                Status = true,
                 Data = chatDtos,
             };
         }
@@ -104,5 +100,77 @@ namespace FCMS.Implementations.Service
                 Status = true,
             };
         }
+
+        //public async Task<List<MyChatsDto>> MyChats(string myId)
+        //{
+        //    var getinFo = await _chatRepository.MyChats(myId);
+        //    if(!getinFo.Any()) return new List<MyChatsDto>();
+
+        //    var myChats = new List<MyChatsDto>();
+
+        //    foreach (var item in getinFo)
+        //    {
+        //        var user = new User();
+        //        var chats = await _chatRepository.GetAllUnSeenChatAsync(item.ReceiverId, item.SenderId);
+
+        //        if (item.SenderId == myId)
+        //        {
+        //            user = await _userRepository.Get(x => x.Id == item.ReceiverId);
+        //        }
+        //        else
+        //        {
+        //           user = await _userRepository.Get(x => x.Id == item.SenderId);
+        //        }
+        //        var myChat = new MyChatsDto
+        //        {
+        //            UserId = user.Id,
+        //            UserFirstName = user.FirstName,
+        //            UserLastName = user.LastName,
+        //            UnSeenChats = chats.Count(),
+        //        };
+        //        myChats.Add(myChat);
+        //    }
+
+        //    return myChats;
+
+        //}
+
+        public async Task<List<MyChatsDto>> MyChats(string myId)
+        {
+            var getinFo = await _chatRepository.MyChats(myId);
+            if (!getinFo.Any()) return new List<MyChatsDto>();
+
+            var myChats = new List<MyChatsDto>();
+            var processedUserIds = new HashSet<string>();
+
+            foreach (var item in getinFo)
+            {
+                string userId = item.SenderId == myId ? item.ReceiverId : item.SenderId;
+
+                // Skip if the user has already been processed
+                if (processedUserIds.Contains(userId))
+                {
+                    continue;
+                }
+
+                var user = await _userRepository.Get(x => x.Id == userId);
+                var chats = await _chatRepository.GetAllUnSeenChatAsync(userId, myId);
+
+                var myChat = new MyChatsDto
+                {
+                    UserId = user.Id,
+                    UserFirstName = user.FirstName,
+                    UserLastName = user.LastName,
+                    UnSeenChats = chats.Count(),
+                };
+                myChats.Add(myChat);
+
+                // Add the user ID to the set of processed user IDs
+                processedUserIds.Add(userId);
+            }
+
+            return myChats;
+        }
+
     }
 }

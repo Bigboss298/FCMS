@@ -34,8 +34,9 @@ namespace FCMS.Implementations.Repository
         {
             return await _context.Orders
                .Include(c => c.Customer)
-                 .Include(p => p.Product)
-                 .ThenInclude(i => i.ProductImages)
+                .Include(p => p.Product)
+                .ThenInclude(f => f.Farmer)
+                .Include(i => i.Product.ProductImages)
                  .Where(expression)
                 .ToListAsync();
         }

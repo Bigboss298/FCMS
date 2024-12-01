@@ -160,7 +160,7 @@ namespace FCMS.Gateway
             };
 
             var url = "https://api.paystack.co/transaction/initialize";
-            var baseUrl = "https://localhost:3000";
+            var baseUrl = "https://fcms-web-app.vercel.app";
             var callBackUrl = $"{baseUrl}/myorders";
             var secretKey = _secretKey;
             var email = model.Email;

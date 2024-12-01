@@ -16,6 +16,7 @@ namespace FCMS.Implementations.Repository
         {
             return await _context.Products
                 .Include(i => i.ProductImages)
+                .Include(r => r.Farmer.Reviews)
                 .Include(f => f.Farmer)
                 .ThenInclude(u => u.User)
                 .ThenInclude(a => a.Address)

@@ -16,12 +16,12 @@ namespace FCMS.Controllers
             _reviewServices = reviewService;
         }
 
-        [HttpPost("Create/{farmerId}/{customerId}")]
-        public async Task<IActionResult> CreateReview([FromRoute] string farmerId, [FromRoute]string customerId, [FromForm] CreateReviewRequestModel model)
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateReview([FromForm] CreateReviewRequestModel model)
         {
             try
             {
-                var reviewToCreate = await _reviewServices.Add(farmerId, customerId, model);
+                var reviewToCreate = await _reviewServices.Add(model);
                 return Ok(reviewToCreate);
             }
             catch (NotFoundException ex)
@@ -105,6 +105,22 @@ namespace FCMS.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("GetAllMyReview")]
+        public async Task<IActionResult> GetAllFarmerReview(string id)
+        {
+            try
+            {
+                var farmerReviews = await _reviewServices.GetAllFarmerReviews(id);
+                    return Ok(farmerReviews);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
-
 }

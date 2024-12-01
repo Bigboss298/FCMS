@@ -16,16 +16,17 @@ namespace FCMS.Implementations.Service
         private readonly IPaystackService _paystackService;
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IFarmerRepository _farmerRepository;
 
 
-        public OrderServices(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IPaystackService paystackService, IUserRepository userRepository, ICustomerRepository customerRepository)
+        public OrderServices(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IPaystackService paystackService, IUserRepository userRepository, ICustomerRepository customerRepository, IFarmerRepository farmerRepository)
         {
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
             _paystackService = paystackService;
             _userRepository = userRepository;
             _customerRepository = customerRepository;
-
+            _farmerRepository = farmerRepository;
         }
 
         public async Task<BaseResponse<OrderDto>> Get(string id)
@@ -93,11 +94,36 @@ namespace FCMS.Implementations.Service
             }).ToList();
         }
 
-        public async Task<IEnumerable<OrderDto>> GetAllMyOrder(string param)
+        public async Task<IEnumerable<OrderDto>> GetAllMyOrderC(string param)
         {
             var cust = await _customerRepository.Get(x => x.UserId == param);
             if (cust is null) throw new NotFoundException("User not found");
             var orders = await _orderRepository.GetAllMyOrder(x => x.CustomerId == cust.Id);
+            if (!orders.Any()) return new List<OrderDto>();
+            return orders.Select(x => new OrderDto
+            {
+                Id = x.Id,
+                CustomerId = x.CustomerId,
+                Product = new Product
+                {
+                    Name = x.Product.Name,
+                    ProductImages = x?.Product?.ProductImages?.Select(x => new ProductImages
+                    {
+                        ImageReference = x.ImageReference,
+                    }).ToList(),
+                    FarmerId = x.Product.FarmerId,
+                },
+                Status = x.Status,
+                Quantity = x.Quantity,
+                Price = x.Price,
+                DateCreated = x.DateCreated,
+            }).ToList();
+        }
+        public async Task<IEnumerable<OrderDto>> GetAllMyOrderF(string param)
+        {
+            var farm = await _farmerRepository.Get(x => x.UserId == param);
+            if (farm is null) throw new NotFoundException("User not found");
+            var orders = await _orderRepository.GetAllMyOrder(x => x.Product.FarmerId == farm.Id);
             if (!orders.Any()) return new List<OrderDto>();
             return orders.Select(x => new OrderDto
             {
@@ -130,22 +156,28 @@ namespace FCMS.Implementations.Service
             _orderRepository.Update<Order>(orderToUpdate);
             await _unitOfWork.SaveChangesAsync();
 
-            var newPayFarmerModel = new CreatePaymentRequestModel
-            {
-                CustomerId = orderToUpdate.CustomerId,
-                productId = orderToUpdate.ProductId,
-                OrderId = orderToUpdate.Id,
-            };
-
             if (orderToUpdate.Status == OrderStatus.Confirmed)
             {
+                var newPayFarmerModel = new CreatePaymentRequestModel
+                {
+                    CustomerId = orderToUpdate.CustomerId,
+                    productId = orderToUpdate.ProductId,
+                    OrderId = orderToUpdate.Id,
+                };
+
                 await _paystackService.PayFarmer(newPayFarmerModel);
+
+                return new BaseResponse<OrderDto>
+                {
+                    Status = true,
+                    Message = $"Farmer has been paid Successfully",
+                };
             }
 
             return new BaseResponse<OrderDto>
             {
                 Status = true,
-                Message = $"Farmer has been paid Successfully",
+                Message = $"Order updated successfully!!!",
             };
 
         }

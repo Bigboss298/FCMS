@@ -15,7 +15,7 @@ namespace FCMS.Controllers
         }
         [HttpGet("GetAll")] 
         public async Task<IActionResult> GetAll()
-        {
+     {
             try
             {
                 var allOrders = await _orderService.GetAll();
@@ -27,12 +27,12 @@ namespace FCMS.Controllers
             }
         }
 
-        [HttpGet("AllMyOrders")]
-        public async Task<IActionResult> GetAllMyOrder(string param)
+        [HttpGet("AllCustomersOrder")]
+        public async Task<IActionResult> GetAllMyOrderC(string param)
         {
             try
             {
-                var allMyOrder = await _orderService.GetAllMyOrder(param);
+                var allMyOrder = await _orderService.GetAllMyOrderC(param);
                 return Ok(allMyOrder);
             }
             catch (Exception ex)
@@ -40,6 +40,21 @@ namespace FCMS.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpGet("AllFarmersOrder")]
+        public async Task<IActionResult> GetAllMyOrderF(string param)
+        {
+            try
+            {
+                var allMyOrder = await _orderService.GetAllMyOrderF(param);
+                return Ok(allMyOrder);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpGet("SingleOrder")]
         public async Task<IActionResult> GetOrder(string id)
         {

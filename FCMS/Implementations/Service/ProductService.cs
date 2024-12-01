@@ -20,8 +20,10 @@ namespace FCMS.Implementations.Service
         private readonly IProductImageRepository _productImagesRepository;
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IProductImageRepository _productImageRepository;
+        private readonly IReviewRepository _reviewRepository;
+        private readonly IReviewService _reviewService;
 
-        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper, IProductImageRepository productImagesRepository, IWebHostEnvironment hostingEnvironment, IProductImageRepository productImageRepository)
+        public ProductService(IProductRepository productRepository, IUnitOfWork unitOfWork, IFileManager fileManager, IMapper mapper, IProductImageRepository productImagesRepository, IWebHostEnvironment hostingEnvironment, IProductImageRepository productImageRepository, IReviewRepository reviewRepository, IReviewService reviewService)
         {
             _productRepository = productRepository;
             _unitOfWork = unitOfWork;
@@ -30,6 +32,8 @@ namespace FCMS.Implementations.Service
             _productImagesRepository = productImagesRepository;
             _hostingEnvironment = hostingEnvironment;
             _productImageRepository = productImageRepository;
+            _reviewRepository = reviewRepository;
+            _reviewService = reviewService;
         }
         public async Task<BaseResponse<ProductDto>> CreateAsync(CreateProductRequestModel model)
         {
@@ -156,6 +160,8 @@ namespace FCMS.Implementations.Service
                 throw new NotFoundException("No such product!!!");
             }
             var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
+            var farmerReviews = await _reviewService.GetAllFarmerReviews(product.Farmer.UserId);
+
             return new BaseResponse<ProductDto>
             {
                 Message = "Product found!!!",
@@ -190,7 +196,8 @@ namespace FCMS.Implementations.Service
                                 Language = product.Farmer.User.Address.Language,
                             },
                         }
-                    }
+                    },
+                    FarmerReview = farmerReviews,
                 }
             };
         }
@@ -252,7 +259,7 @@ namespace FCMS.Implementations.Service
 
         public async Task<IEnumerable<ProductDto>> GetProductsByAny(string param)
         {
-            var products = await _productRepository.GetByAny(x => x.Name == param || x.Farmer.User.FirstName == param || x.FarmerId == param);
+            var products = await _productRepository.GetByAny(x => x.Name == param || x.Farmer.User.FirstName == param || x.Farmer.UserId == param);
             if (!products.Any())
             {
                 throw new NotFoundException("Product not Found!!!");
@@ -262,7 +269,7 @@ namespace FCMS.Implementations.Service
             {
                 var productImage = await _productImagesRepository.GetAll(x => x.ProductId == product.Id);
 
-
+                var farmerReviews = await _reviewService.GetAllFarmerReviews(product.Farmer.UserId);
                 var productToAdd = new ProductDto
                 {
                     Id = product.Id,
@@ -292,8 +299,9 @@ namespace FCMS.Implementations.Service
                                 City = product.Farmer.User.Address.City,
                                 Language = product.Farmer.User.Address.Language,
                             },
-                        }
-                    }
+                        },
+                    },
+                    FarmerReview = farmerReviews,
                 };
 
                 listOfProducts.Add(productToAdd);

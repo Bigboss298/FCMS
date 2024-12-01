@@ -1,4 +1,5 @@
-﻿using FCMS.Model.Entities;
+﻿using FCMS.Model.DTOs;
+using FCMS.Model.Entities;
 
 namespace FCMS.Interfaces.Repository
 {
@@ -8,5 +9,6 @@ namespace FCMS.Interfaces.Repository
         Task<List<Chat>> GetAllUnSeenChatAsync(string farmerId, string customerId);
         Task<List<Chat>> GetAllChatFromASender(string farmerId, string customerId);
         Task<List<Chat>> GetChatByChatId(string loginId, string senderId, string chatId);
+        Task<List<Chat>> MyChats(string myId); 
     }
 }

@@ -1,6 +1,8 @@
 ﻿using FCMS.Auth;
 using FCMS.Interfaces.Service;
 using FCMS.Model.DTOs;
+using FCMS.Model.Exceptions;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FCMS.Controllers
@@ -19,8 +21,8 @@ namespace FCMS.Controllers
             _config = config;
             _tokenService = tokenService;
         }
-        [HttpPost("CreateChat/{id}/{recieverId}")]
-        public async Task<IActionResult> CreateChat([FromBody] CreateChatRequestModel model, [FromRoute] string id, [FromRoute] string recieverId)
+        [HttpPost("AddChat")]
+        public async Task<IActionResult> CreateChat([FromForm] CreateChatRequestModel model)
         {
             //string token = Request.Headers["Authorization"];
             //string extractedToken = token.Substring(7);
@@ -29,7 +31,7 @@ namespace FCMS.Controllers
             //{
             //    return Unauthorized();
             //}
-            var chat = await _chatService.CreateChat(model, id, recieverId);
+            var chat = await _chatService.CreateChat(model);
             if (!chat.Status)
             {
                 return BadRequest(chat);
@@ -46,15 +48,37 @@ namespace FCMS.Controllers
             }
             return Ok(response);
         }
-        [HttpGet("GetAllUnSeenChatAsync/{recieverId}/{senderId}")]
-        public async Task<IActionResult> GetAllUnseenChats([FromRoute] string recieverId, string senderId)
-        {
-            var response = await _chatService.GetChatFromASenderAsync(recieverId, senderId);
-            if (!response.Status)
+        [HttpGet("GetChats")]
+        public async Task<IActionResult> GetChats(string clickedUser, string loggedinUser)
+         
+      {
+            try
             {
-                return BadRequest(response);
+                var response = await _chatService.GetChatFromASenderAsync(clickedUser, loggedinUser);
+                return Ok(response);
             }
-            return Ok(response);
+            catch (NotFoundException ex)
+            {
+                return StatusCode(404, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        [HttpGet("GetMyChats")]
+        public async Task<IActionResult> MyChats(string myId)
+        {
+            try
+            {
+                var myChats = await _chatService.MyChats(myId);
+                return Ok(myChats);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+
         }
     }
 }

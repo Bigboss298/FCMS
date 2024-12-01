@@ -7,6 +7,6 @@ namespace FCMS.Interfaces.Repository
     public interface IReviewRepository : IBaseRepository
     {
         Task<Review> Get(Expression<Func<Review, bool>> expression);
-        Task<List<Review>> GetAllFarmerReviews(string farmerId);
+        Task<IEnumerable<Review>> GetAllFarmerReviews(Expression<Func<Review, bool>> expression);
     }
 }

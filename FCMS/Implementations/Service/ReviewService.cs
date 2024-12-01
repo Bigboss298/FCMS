@@ -12,22 +12,27 @@ namespace FCMS.Implementations.Service
     {
         private readonly IReviewRepository _reviewRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserRepository _userRepoitory;
+        private readonly ICustomerRepository _customerRepository;
 
-        public ReviewService(IReviewRepository reviewRepository, IUnitOfWork unitOfWork)
+        public ReviewService(IReviewRepository reviewRepository, IUnitOfWork unitOfWork, IUserRepository userRepository, ICustomerRepository customerRepository)
         {
             _reviewRepository = reviewRepository;
             _unitOfWork = unitOfWork;
+            _userRepoitory = userRepository;
+            _customerRepository = customerRepository;
         }
 
-        public async Task<BaseResponse<ReviewDto>> Add(string farmerId, string customerId, CreateReviewRequestModel model)
+        public async Task<BaseResponse<ReviewDto>> Add(CreateReviewRequestModel model)
         {
             if(model is null) throw new Exception(nameof(model));
+
             var newReview = new Review
             {
                 Ratings = model.Ratings,
                 Comments = model.Comments,
-                FarmerId = farmerId,
-                CustomerId = customerId,
+                FarmerId = model.FarmerId,
+                CustomerId = model.CustomerId,
             };
             _reviewRepository.Insert<Review>(newReview);
             await _unitOfWork.SaveChangesAsync();
@@ -53,7 +58,9 @@ namespace FCMS.Implementations.Service
 
         public async Task<BaseResponse<ReviewDto>> DeleteAllReviews(string farmerId)
         {
-            var reviewsToDelete = await _reviewRepository.GetAllFarmerReviews(farmerId);
+            var user = await _userRepoitory.Get(x => x.Id == farmerId);
+
+            var reviewsToDelete = await _reviewRepository.GetAllFarmerReviews(x => x.FarmerId == user.Farmer.Id);
             if (!reviewsToDelete.Any()) throw new NotFoundException("No Reviews for the farmer");
             foreach (var item in reviewsToDelete)
             {
@@ -80,25 +87,41 @@ namespace FCMS.Implementations.Service
             };
         }
 
-        public async Task<ReviewLists> GetAllFarmerReviews(string farmerId)
+        public async Task<IEnumerable<ReviewDto>> GetAllFarmerReviews(string farmerId)
         {
-            var reviewsToGet = await _reviewRepository.GetAllFarmerReviews(farmerId);
-            if(!reviewsToGet.Any())
+            var user = await _userRepoitory.Get(x => x.Id == farmerId);
+
+            if (user is null) throw new NotFoundException("User not Found!!!");
+
+            var reviewsToGet = await _reviewRepository.GetAllFarmerReviews(x => x.FarmerId == user.Farmer.Id);
+
+            if (!reviewsToGet.Any())
             {
-                return new ReviewLists
-                {
-                    Status = true,
-                    Message = "No reviews for this farmer yet",
-                    Data = new List<ReviewDto>(),
-                };
+                return new List<ReviewDto>();
             }
-            return new ReviewLists
+            var myReviews = new List<ReviewDto>();
+            foreach (var item in reviewsToGet)
             {
-                Status = true,
-                Message = "No reviews for this farmer yet",
-                Data = reviewsToGet.Adapt<List<ReviewDto>>(),
-            };
+                var customerDetails = await _customerRepository.Get(x => x.Id == item.CustomerId);
+
+                if (customerDetails == null)
+                {
+                    throw new NotFoundException($"Customer with ID {item.CustomerId} not found");
+                }
+
+                var review = new ReviewDto
+                {
+                    Ratings = (int)item.Ratings,
+                    Comments = item.Comments,
+                    CustomerId = item.CustomerId,
+                    CustomerName = $"{customerDetails.User.FirstName} {customerDetails.User.LastName}",
+                    FarmerId = item.FarmerId,
+                };
+                myReviews.Add(review);
+            }
+            return myReviews;
         }
+
 
         public async Task<BaseResponse<ReviewDto>> Update(string id, UpdateReviewRequestModel model)
         {
@@ -116,6 +139,5 @@ namespace FCMS.Implementations.Service
                 Message = "Update Successfull!!!",
             };
         }
-
     }
 }

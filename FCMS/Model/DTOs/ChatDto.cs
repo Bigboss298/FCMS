@@ -12,13 +12,20 @@
 
     public class ChatLists
     {
-        public bool Status { get; set; }
-        public string Message { get; set; } = default!;
         public List<ChatDto> Data { get; set; } = new List<ChatDto>();
     }
 
     public class CreateChatRequestModel
     {
         public string Content { get; set; } = default!;
+        public string Id { get; set; } = default!;
+        public string RecieverId { get; set; } = default!;
+    }
+    public class MyChatsDto
+    {
+        public string UserId { get; set; } = default!;
+        public string UserFirstName { get; set; } = default!;
+        public string UserLastName { get; set; } = default!;
+        public int UnSeenChats { get; set; }
     }
 }

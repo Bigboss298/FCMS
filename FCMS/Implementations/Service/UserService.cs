@@ -83,10 +83,10 @@ namespace FCMS.Implementations.Service
             {
                 throw new Exception("Inavlid Email or Password");
             }
-            var loggedInUser = await _userRepository.Get<User>(x => x.Email == model.Email);
-            var jwtModel1 = loggedInUser.Adapt<UserDto>();
+            //var loggedInUser = await _userRepository.Get<User>(x => x.Email == model.Email);
+            var jwtModel1 = user.Adapt<UserDto>();
             var jwtModel = jwtModel1.Adapt<JwtTokenRequestModel>();
-            jwtModel.Id = loggedInUser.Id;
+            jwtModel.Id = user.Id;
             jwtModel.ProfilePicture = jwtModel1.ProfilePicture;
             var token = generateToken = _tokenService.CreateToken(_config["Jwt:Key"].ToString(), _config["Jwt:Issuer"].ToString(), jwtModel);
             jwtModel1.JwtToken = token;

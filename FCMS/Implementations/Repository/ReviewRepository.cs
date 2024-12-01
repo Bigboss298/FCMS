@@ -18,9 +18,9 @@ namespace FCMS.Implementations.Repository
             throw new NotImplementedException();
         }
 
-        public async Task<List<Review>> GetAllFarmerReviews(string farmerid)
+        public async Task<IEnumerable<Review>> GetAllFarmerReviews(Expression<Func<Review, bool>> expression)
         {
-            return await _context.Reviews.Where(x => x.FarmerId == farmerid).ToListAsync();
+            return await _context.Reviews.Where(expression).ToListAsync();
         }
     }
 }
