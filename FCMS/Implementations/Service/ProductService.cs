@@ -252,7 +252,7 @@ namespace FCMS.Implementations.Service
 
         public async Task<IEnumerable<ProductDto>> GetProductsByAny(string param)
         {
-            var products = await _productRepository.GetByAny(x => x.Name == param || x.Farmer.User.FirstName == param || x.FarmerId == param);
+            var products = await _productRepository.GetByAny(x => x.Name == param || x.Farmer.User.FirstName == param || x.FarmerId == param || x.Farmer.UserId == param);
             if (!products.Any())
             {
                 throw new NotFoundException("Product not Found!!!");

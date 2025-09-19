@@ -29,7 +29,7 @@ builder.Services.AddCors(c => c
                 .AllowAnyMethod()
                 .AllowAnyOrigin()
                 .WithOrigins("https://fcms-web-app.vercel.app")
-                .WithOrigins("http://localhost:3000")));
+                .WithOrigins("http://localhost:5173")));
 
 
 builder.Services.AddSwaggerGen(c =>
